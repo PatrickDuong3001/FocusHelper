@@ -5,8 +5,10 @@ from PyQt5 import QtGui
 from PyQt5 import uic
 from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
+from appViewer import appViewer
 from customTimer import customTimer
-from appDetector import appDetector
+from appManager import appManager
+from appStopper import appStopper
 import sys
 import os
 
@@ -20,8 +22,8 @@ class UI(QMainWindow):
         self.show() 
         
         #controls
-        self.timedApps = []
-        self.lockedApps = []
+        #self.timedApps = []
+        #self.lockedApps = []
         
         #define Widgets
         self.dialogBox = self.findChild(QPlainTextEdit,"dialogBox")
@@ -52,15 +54,15 @@ class UI(QMainWindow):
         self.activate2.setEnabled(True)
         
         #display list of apps 
-        self.appDetect1 = appDetector(self.listApps)
-        self.appDetect2 = appDetector(self.listApps2)
+        self.appDetect1 = appViewer(self.listApps)
+        self.appDetect2 = appViewer(self.listApps2)
         self.appDetect1.appDetect()
         self.appDetect2.appDetect()
         
     def setIcon(self):
         appIcon = QIcon("resources/focusIcon.png")
         self.setWindowIcon(appIcon)
-        
+    
     def setControl(self,controlType):
         if controlType == 1: #timeStopChosen signal
             self.timeStopChosen = True 
@@ -71,10 +73,24 @@ class UI(QMainWindow):
         if (self.anAppChosenToStop and self.timeStopChosen) == True:
             items = self.listApps2.selectedItems()
             for item in items:
-                self.timedApps.append(item.text())
-            self.appDetect2.updateListAppView(self.timedApps)    
+                self.appDetect2.addTimedAppList(item.text())
+            self.appDetect2.updateListAppView()    
+            
+            #extract time value from QTimeEdit
+            targetHour = self.dateTime.time().toString("hh")
+            targetMin = self.dateTime.time().toString("mm")
+            
+            print("hello")
+            
+            appStop = appStopper(targetHour,targetMin)
+            print("after stopper")
+            appStop.timerActivate()
+            
+            print("hello2")
+            
             self.timeStopChosen = False
             self.anAppChosenToStop = False
+            self.dateTime.setDateTime(QtCore.QDateTime.currentDateTime())
         else:
             self.showDialog()
     
