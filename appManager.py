@@ -11,8 +11,7 @@ class appManager():
     '''
     def __init__(self):   
         super().__init__()
-        print("Hello4")
-        
+        print("inside appManager??")
                 
     def addToDictShortcutTarget(self,appName,appTarget):
         dictOfShortcutTarget[appName] = appTarget
