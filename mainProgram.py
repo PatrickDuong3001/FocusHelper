@@ -6,6 +6,7 @@ from PyQt5 import QtCore
 from appViewer import appViewer
 from customTimer import customTimer
 from appStopper import appStopper
+from appManager import appManager
 import sys
 from PyQt5.QtCore import QThreadPool, QObject, QRunnable, pyqtSignal
 import os
@@ -71,22 +72,30 @@ class UI(QMainWindow,QObject):
             
     def activatedCountDown(self):            
         if (self.anAppChosenToStop and self.timeStopChosen) == True:
-            items = self.listApps2.selectedItems()
-            print("in if")
-            for item in items:
-                self.appDetect2.addTimedAppList(item.text())
-            self.appDetect2.updateListAppView()    
-            
-            #extract time value from QTimeEdit
-            targetHour = self.dateTime.time().toString("hh")
-            targetMin = self.dateTime.time().toString("mm")
-                        
-            self.appStop = appStopper(targetHour,targetMin,self.listApps2)
-            self.pool.start(self.appStop.timerActivate)
-            
-            self.timeStopChosen = False
-            self.anAppChosenToStop = False
-            self.dateTime.setDateTime(QtCore.QDateTime.currentDateTime())
+            if (appManager().getNumberOfOccupiedApps() < 6):
+                items = self.listApps2.selectedItems()
+                print("in if")
+                for item in items:
+                    self.appDetect2.addTimedAppList(item.text())
+                self.appDetect2.updateListAppView()    
+                
+                #extract time value from QTimeEdit
+                targetHour = self.dateTime.time().toString("hh")
+                targetMin = self.dateTime.time().toString("mm")
+                            
+                self.appStop = appStopper(targetHour,targetMin,self.listApps2)
+                self.pool.start(self.appStop.timerActivate)
+                
+                self.timeStopChosen = False
+                self.anAppChosenToStop = False
+                self.dateTime.setDateTime(QtCore.QDateTime.currentDateTime())
+            else:
+                msgBox = QMessageBox()
+                msgBox.setIcon(QMessageBox.Warning)
+                msgBox.setWindowTitle("WARNING")
+                msgBox.setStandardButtons(QMessageBox.Ok)
+                msgBox.setText("Cannot set lock or timer on 6+ applications!")
+                msgBox.exec()
         else:
             self.showDialog()
     

@@ -1,9 +1,7 @@
-import os
-import win32com.client 
-
 #global arrays
 timedApps = []
 dictOfShortcutTarget = {}
+appInOperation = [] 
 
 class appManager():
     '''
@@ -18,9 +16,11 @@ class appManager():
         
     def addTimedAppList(self,appName):
         timedApps.append(appName) 
+        appInOperation.append(appName)
         
     def removeTimedAppFromList(self,appName):
         timedApps.remove(appName)
+        appInOperation.remove(appName)
     
     def getTimedAppName(self,order):
         return timedApps[order]
@@ -31,3 +31,5 @@ class appManager():
     def exportDictOfShortcutTarget(self):
         return dictOfShortcutTarget
     
+    def getNumberOfOccupiedApps(self):
+        return len(appInOperation)
