@@ -81,7 +81,7 @@ class UI(QMainWindow,QObject):
             targetHour = self.dateTime.time().toString("hh")
             targetMin = self.dateTime.time().toString("mm")
                         
-            self.appStop = appStopper(targetHour,targetMin)
+            self.appStop = appStopper(targetHour,targetMin,self.listApps2)
             self.pool.start(self.appStop.timerActivate)
             
             self.timeStopChosen = False
