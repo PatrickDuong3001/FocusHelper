@@ -20,7 +20,7 @@ class UI(QMainWindow,QObject):
         self.setIcon()
         self.show() 
         self.pool = QThreadPool()
-        self.pool.setMaxThreadCount(5)
+        self.pool.setMaxThreadCount(6)
         
         #controls
         #self.timedApps = []
