@@ -1,27 +1,30 @@
 from PyQt5.QtWidgets import QMainWindow, QApplication, QDateTimeEdit, QSlider, QPushButton, QListWidget, QPlainTextEdit, QMessageBox
 from PyQt5.QtGui import QIcon
 from functools import partial
-from PyQt5 import QtGui
 from PyQt5 import uic
 from PyQt5 import QtCore
-from PyQt5.QtCore import Qt
+from appViewer import appViewer
 from customTimer import customTimer
-from appDetector import appDetector
+from appStopper import appStopper
+from appManager import appManager
 import sys
+from PyQt5.QtCore import QThreadPool, QObject, QRunnable, pyqtSignal
 import os
 
 #Initiate UI
-class UI(QMainWindow):
+class UI(QMainWindow,QObject):
     def __init__(self):
         super(UI,self).__init__()
         uic.loadUi("resources/FocusUI.ui",self)
         self.setFixedSize(915, 616)
         self.setIcon()
         self.show() 
+        self.pool = QThreadPool()
+        self.pool.setMaxThreadCount(5)
         
         #controls
-        self.timedApps = []
-        self.lockedApps = []
+        #self.timedApps = []
+        #self.lockedApps = []
         
         #define Widgets
         self.dialogBox = self.findChild(QPlainTextEdit,"dialogBox")
@@ -52,29 +55,47 @@ class UI(QMainWindow):
         self.activate2.setEnabled(True)
         
         #display list of apps 
-        self.appDetect1 = appDetector(self.listApps)
-        self.appDetect2 = appDetector(self.listApps2)
+        self.appDetect1 = appViewer(self.listApps)
+        self.appDetect2 = appViewer(self.listApps2)
         self.appDetect1.appDetect()
         self.appDetect2.appDetect()
         
     def setIcon(self):
         appIcon = QIcon("resources/focusIcon.png")
         self.setWindowIcon(appIcon)
-        
+    
     def setControl(self,controlType):
         if controlType == 1: #timeStopChosen signal
             self.timeStopChosen = True 
         elif controlType == 2: #anAppChosenToStop signal
             self.anAppChosenToStop = True
-    
-    def activatedCountDown(self):
+            
+    def activatedCountDown(self):            
         if (self.anAppChosenToStop and self.timeStopChosen) == True:
-            items = self.listApps2.selectedItems()
-            for item in items:
-                self.timedApps.append(item.text())
-            self.appDetect2.updateListAppView(self.timedApps)    
-            self.timeStopChosen = False
-            self.anAppChosenToStop = False
+            if (appManager().getNumberOfOccupiedApps() < 6):
+                items = self.listApps2.selectedItems()
+                print("in if")
+                for item in items:
+                    self.appDetect2.addTimedAppList(item.text())
+                self.appDetect2.updateListAppView()    
+                
+                #extract time value from QTimeEdit
+                targetHour = self.dateTime.time().toString("hh")
+                targetMin = self.dateTime.time().toString("mm")
+                            
+                self.appStop = appStopper(targetHour,targetMin,self.listApps2)
+                self.pool.start(self.appStop.timerActivate)
+                
+                self.timeStopChosen = False
+                self.anAppChosenToStop = False
+                self.dateTime.setDateTime(QtCore.QDateTime.currentDateTime())
+            else:
+                msgBox = QMessageBox()
+                msgBox.setIcon(QMessageBox.Warning)
+                msgBox.setWindowTitle("WARNING")
+                msgBox.setStandardButtons(QMessageBox.Ok)
+                msgBox.setText("Cannot set lock or timer on 6+ applications!")
+                msgBox.exec()
         else:
             self.showDialog()
     
