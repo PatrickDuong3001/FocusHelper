@@ -11,7 +11,7 @@ class appViewer():
         self.desktopPath = os.path.expanduser("~\Desktop")
         self.listView = listView
         self.apper = appManager()
-        self.timedApps = self.apper.exportTimedAppList()
+        self.occupiedApps = self.apper.exportOccupiedAppList()
         
     def appDetect(self):
         shell = win32com.client.Dispatch("WScript.Shell")
@@ -31,11 +31,13 @@ class appViewer():
         self.listView.clear() 
         for file in os.listdir(self.desktopPath):
             if file.endswith(".url"):
-                self.addToListView(file.replace(".url",""),self.timedApps)
+                self.addToListView(file.replace(".url",""),self.occupiedApps)
             elif file.endswith(".lnk"):
-                self.addToListView(file.replace(".lnk",""),self.timedApps)   
+                self.addToListView(file.replace(".lnk",""),self.occupiedApps)   
                  
     def addTimedAppList(self,appName):
         self.apper.addTimedAppList(appName)
     
+    def addLockedAppList(self,appName):
+        self.apper.addLockedAppList(appName)
     
