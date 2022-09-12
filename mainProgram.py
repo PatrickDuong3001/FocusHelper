@@ -9,7 +9,8 @@ from customTimer import customTimer
 from appStopper import appStopper
 from appManager import appManager
 import sys
-from PyQt5.QtCore import QThreadPool, QObject, QRunnable, pyqtSignal
+from PyQt5.QtCore import QThreadPool, QObject
+from PyQt5 import QtGui
 import os
 
 #Initiate UI
@@ -36,7 +37,7 @@ class UI(QMainWindow,QObject):
         self.activate2 = self.findChild(QPushButton,"activate2")
         self.dateTime = self.findChild(QDateTimeEdit,"dateTime")
         self.dateTime.setDateTime(QtCore.QDateTime.currentDateTime())
-        
+                
         #controls
         self.activate1.setEnabled(False)
         self.activate2.setEnabled(False)
@@ -44,6 +45,7 @@ class UI(QMainWindow,QObject):
         self.anAppChosenToStop = False
         self.durationAlreadySet = False
         self.anAppChosenToLock = False
+        self.quitAttempt = 0
         
         #events
         self.activate2.clicked.connect(self.activatedCountDown)
@@ -159,10 +161,31 @@ class UI(QMainWindow,QObject):
                 msgBox.setText("Please select an app")
             msgBox.exec()
     
+    def closeEvent(self, event):
+        appManage = appManager().getNumberOfOccupiedApps()
+        print(appManage)
+        if (appManage != 0):
+            msgBox = QMessageBox()
+            msgBox.setIcon(QMessageBox.Critical)
+            msgBox.setWindowTitle("ALERT")
+            msgBox.setStandardButtons(QMessageBox.Ok)
+            if (self.quitAttempt < 3):
+                self.quitAttempt += 1
+                msgBox.setText(f"Cannot close. Applications under lock or timer!\n Quit attempts: {self.quitAttempt}")
+                msgBox.exec()
+                event.ignore()
+            else: 
+                msgBox.setText("Quit attempts exceed 3. Notifying Super User...")
+                msgBox.exec()
+                event.accept()
+        else: 
+            event.accept()
+            
+    
 
 
         
 # Initialize the app
 app = QApplication(sys.argv)
 UIWindow = UI()
-app.exec_() 
+sys.exit(app.exec_()) 
