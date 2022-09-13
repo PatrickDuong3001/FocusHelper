@@ -1,7 +1,5 @@
-from asyncio import threads
-import time
 from appManager import appManager
-from PyQt5.QtCore import pyqtSignal,QRunnable
+from PyQt5.QtCore import QRunnable
 import subprocess
 from appViewer import appViewer
 import time
@@ -12,15 +10,15 @@ class appStopper(QRunnable):
     this class checks when to stop an app
     the class adopts multithreading model
     '''
-    def __init__(self,targetHour,targetMin,listView):   
+    def __init__(self,targetHour,targetMin,listView1,listView2):   
         super().__init__()
         self.targetHour = targetHour
         self.targetMin = targetMin 
         self.apps = appManager()
         self.appTarget = self.apps.exportDictOfShortcutTarget()
         self.timedAppList = self.apps.exportTimedAppList()
-        self.finished = pyqtSignal()
-        self.listView = listView
+        self.listView1 = listView1
+        self.listView2 = listView2
         
     def timerActivate(self):
         appName = self.apps.getTimedAppName(-1)
@@ -41,7 +39,8 @@ class appStopper(QRunnable):
         time.sleep(random.randint(1,15))
         subprocess.call(f"TASKKILL /F /T /IM {appTarget}", shell=True)
         self.apps.removeTimedAppFromList(appName)   
-        appViewer(self.listView).updateListAppView()     
+        appViewer(self.listView1).updateListAppView()
+        appViewer(self.listView2).updateListAppView()     
     
     def retrieveExeFromAppTarget(self,appFullTarget):
         return appFullTarget.split("\\")[-1]
