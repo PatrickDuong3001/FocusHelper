@@ -37,7 +37,7 @@ class appStopper(QRunnable):
     def processKiller(self,appName,appTarget):
         print("inside process killer??")
         time.sleep(random.randint(1,15))
-        subprocess.call(f"TASKKILL /F /T /IM {appTarget}", shell=True)
+        subprocess.call(f"TASKKILL /F /T /IM {appTarget} >nul 2>&1", shell=True)
         self.apps.removeTimedAppFromList(appName)   
         appViewer(self.listView1).updateListAppView()
         appViewer(self.listView2).updateListAppView()     
