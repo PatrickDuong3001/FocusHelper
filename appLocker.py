@@ -34,9 +34,8 @@ class appLocker(QRunnable):
         appViewer(self.listView2).updateListAppView()
             
     def processChecker(self,appTarget):
-        print("inside process checker??")
         try:
-            subprocess.call(f"TASKKILL /F /T /IM {appTarget}", shell=True)
+            subprocess.call(f"TASKKILL /F /T /IM {appTarget} >nul 2>&1", shell=True)
         except subprocess.CalledProcessError:
             pass
     
