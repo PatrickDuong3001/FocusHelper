@@ -1,7 +1,7 @@
-from PyQt5.QtWidgets import QMainWindow, QApplication, QDateTimeEdit, QSlider, QPushButton, QListWidget, QPlainTextEdit, QMessageBox
+from PyQt5.QtWidgets import QMainWindow, QApplication, QDateTimeEdit, QSlider, QPushButton, QListWidget, QPlainTextEdit, QMessageBox,QCheckBox,QComboBox,QLineEdit,QLabel
+from PyQt5.uic import loadUi
 from PyQt5.QtGui import QIcon
 from functools import partial
-from PyQt5 import uic
 from PyQt5 import QtCore
 from appLocker import appLocker
 from appViewer import appViewer
@@ -17,9 +17,10 @@ import os
 class UI(QMainWindow,QObject):
     def __init__(self):
         super(UI,self).__init__()
-        uic.loadUi("resources/FocusUI.ui",self)
+        self.ui = loadUi("resources/FocusUI.ui",self)
         self.setFixedSize(915, 616)
         self.setIcon()
+        self.setWindowTitle("FocusHelper v1.0")
         self.show() 
         self.pool = QThreadPool()
         self.pool.setMaxThreadCount(6)
@@ -37,6 +38,15 @@ class UI(QMainWindow,QObject):
         self.activate2 = self.findChild(QPushButton,"activate2")
         self.dateTime = self.findChild(QDateTimeEdit,"dateTime")
         self.dateTime.setDateTime(QtCore.QDateTime.currentDateTime())
+        self.emailEnable = self.findChild(QCheckBox,"emailEnable")
+        self.emailList = self.findChild(QComboBox,"emailList")
+        self.passInsert = self.findChild(QLineEdit,"passInsert")
+        self.emailActivate = self.findChild(QPushButton,"emailActivate")
+        self.shutDown = self.findChild(QPushButton,"shutDown")
+        self.emailLabel = self.findChild(QLabel,"emailLabel")
+        self.passLabel = self.findChild(QLabel,"passLabel")
+        self.activateLabel = self.findChild(QLabel,"activateLabel")
+        self.shutDownLabel = self.findChild(QLabel,"shutDownLabel")
                 
         #controls
         self.activate1.setEnabled(False)
@@ -46,6 +56,14 @@ class UI(QMainWindow,QObject):
         self.durationAlreadySet = False
         self.anAppChosenToLock = False
         self.quitAttempt = 0
+        self.advancedModeHide()
+        
+        #menu bar
+        option = self.menuBar().addMenu('Options')
+        self.advancedMode = option.addAction('Advanced Mode')
+        self.normalMode = option.addAction('Normal Mode')
+        self.about = option.addAction("About")
+        self.instruction = option.addAction("How to Use")
         
         #events
         self.activate2.clicked.connect(self.activatedCountDown)
@@ -54,6 +72,7 @@ class UI(QMainWindow,QObject):
         self.listApps.itemClicked.connect(partial(self.setControl,4))
         self.durationSetter.valueChanged.connect(partial(self.setControl,3))
         self.activate1.clicked.connect(self.activateLocker)
+        self.advancedMode.triggered.connect(self.advancedModeUnhide) 
         
         #initial dialog messages
         self.dialogBox.appendPlainText("Welcome to FocusHelper. Hope you enjoy it! :)")
@@ -180,10 +199,31 @@ class UI(QMainWindow,QObject):
                 event.accept()
         else: 
             event.accept()
-            
     
-
-
+    def advancedModeUnhide(self):
+        print("unhide??")
+        self.emailEnable.show()
+        self.passInsert.show()
+        self.emailList.show()
+        self.shutDown.show()
+        self.emailActivate.show()
+        self.passLabel.show()
+        self.emailLabel.show()
+        self.activateLabel.show()
+        self.shutDownLabel.show()
+        
+    def advancedModeHide(self):
+        self.emailEnable.hide()
+        self.passInsert.hide()
+        self.emailList.hide()
+        self.shutDown.hide()
+        self.emailActivate.hide()
+        self.passLabel.hide()
+        self.emailLabel.hide()
+        self.activateLabel.hide()
+        self.shutDownLabel.hide()
+        
+        
         
 # Initialize the app
 app = QApplication(sys.argv)
