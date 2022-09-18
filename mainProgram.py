@@ -10,8 +10,9 @@ from appStopper import appStopper
 from appManager import appManager
 import sys
 from PyQt5.QtCore import QThreadPool, QObject
-from PyQt5 import QtGui
-import os
+import emailManager
+from configparser import ConfigParser
+from os.path import exists
 
 #Initiate UI
 class UI(QMainWindow,QObject):
@@ -22,13 +23,22 @@ class UI(QMainWindow,QObject):
         self.setIcon()
         self.setWindowTitle("FocusHelper v1.0")
         self.show() 
+        self.setupFile()
         self.pool = QThreadPool()
         self.pool.setMaxThreadCount(6)
         
-        #controls
-        #self.timedApps = []
-        #self.lockedApps = []
-        
+    def setupFile(self):
+        #prepare a config file 
+        self.config = ConfigParser()
+        if(exists("resources/emailList.cfg") == False):
+            f = open("resources/emailList.cfg","x")
+        self.config.add_section("emails")
+        self.config.add_section("passwords") 
+        self.config.add_section("current_email")
+        self.config.add_section("current_password")
+        with open("resources/emailList.cfg","w") as configfile:
+            self.config.write(configfile)
+                
         #define Widgets
         self.dialogBox = self.findChild(QPlainTextEdit,"dialogBox")
         self.listApps = self.findChild(QListWidget,"listApps")
@@ -78,6 +88,7 @@ class UI(QMainWindow,QObject):
         self.activate1.clicked.connect(self.activateLocker)
         self.advancedMode.triggered.connect(self.advancedModeUnhide) 
         self.normalMode.triggered.connect(self.advancedModeHide)
+        self.emailAdd.clicked.connect(self.emailPassHandler)
         
         #initial dialog messages
         self.dialogBox.appendPlainText("Welcome to FocusHelper. Hope you enjoy it! :)")
@@ -231,8 +242,31 @@ class UI(QMainWindow,QObject):
         self.addLabel.hide()
         self.shutDownLabel.hide()
         self.emailListLabel.hide()
-        
-        
+            
+    def emailPassHandler(self):
+        emailManage = emailManager.emailManager(self.emailInsert,self.passInsert,self.emailList)
+        email =  self.emailInsert.text()
+        password = self.passInsert.text()
+        msgBox = QMessageBox()
+        msgBox.setIcon(QMessageBox.Warning)
+        msgBox.setWindowTitle("WARNING")
+        msgBox.setStandardButtons(QMessageBox.Ok)
+        if(len(email) == 0 and len(password) == 0):
+            msgBox.setText("Please enter your email and password!")
+        elif(len(email) == 0 and len(password) > 0):
+            msgBox.setText("Please enter your email!")
+        elif(len(email) > 0 and len(password) == 0):
+            msgBox.setText("Please enter your password!")
+        else: 
+            valid = emailManage.emailValidator(email)
+            print(valid)
+            if (valid == 0):
+                msgBox.setText("Please enter a valid email!")
+            elif (valid == 1):
+                msgBox.setText("Please enter a non-disposable email!")
+            else: 
+                msgBox.setText("Valid!")
+        msgBox.exec()
         
 # Initialize the app
 app = QApplication(sys.argv)
