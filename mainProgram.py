@@ -38,15 +38,19 @@ class UI(QMainWindow,QObject):
         self.activate2 = self.findChild(QPushButton,"activate2")
         self.dateTime = self.findChild(QDateTimeEdit,"dateTime")
         self.dateTime.setDateTime(QtCore.QDateTime.currentDateTime())
+        
         self.emailEnable = self.findChild(QCheckBox,"emailEnable")
-        self.emailList = self.findChild(QComboBox,"emailList")
+        self.emailList = self.findChild(QListWidget,"emailList")
+        self.emailInsert = self.findChild(QLineEdit,"emailInsert")
         self.passInsert = self.findChild(QLineEdit,"passInsert")
-        self.emailActivate = self.findChild(QPushButton,"emailActivate")
+        self.emailAdd = self.findChild(QPushButton,"emailAdd")
         self.shutDown = self.findChild(QPushButton,"shutDown")
+        
         self.emailLabel = self.findChild(QLabel,"emailLabel")
         self.passLabel = self.findChild(QLabel,"passLabel")
-        self.activateLabel = self.findChild(QLabel,"activateLabel")
+        self.addLabel = self.findChild(QLabel,"addLabel")
         self.shutDownLabel = self.findChild(QLabel,"shutDownLabel")
+        self.emailListLabel = self.findChild(QLabel,"emailListLabel")
                 
         #controls
         self.activate1.setEnabled(False)
@@ -73,6 +77,7 @@ class UI(QMainWindow,QObject):
         self.durationSetter.valueChanged.connect(partial(self.setControl,3))
         self.activate1.clicked.connect(self.activateLocker)
         self.advancedMode.triggered.connect(self.advancedModeUnhide) 
+        self.normalMode.triggered.connect(self.advancedModeHide)
         
         #initial dialog messages
         self.dialogBox.appendPlainText("Welcome to FocusHelper. Hope you enjoy it! :)")
@@ -203,25 +208,29 @@ class UI(QMainWindow,QObject):
     def advancedModeUnhide(self):
         print("unhide??")
         self.emailEnable.show()
+        self.emailInsert.show()
         self.passInsert.show()
         self.emailList.show()
         self.shutDown.show()
-        self.emailActivate.show()
+        self.emailAdd.show()
         self.passLabel.show()
         self.emailLabel.show()
-        self.activateLabel.show()
+        self.addLabel.show()
         self.shutDownLabel.show()
+        self.emailListLabel.show()
         
     def advancedModeHide(self):
         self.emailEnable.hide()
+        self.emailInsert.hide()
         self.passInsert.hide()
         self.emailList.hide()
         self.shutDown.hide()
-        self.emailActivate.hide()
+        self.emailAdd.hide()
         self.passLabel.hide()
         self.emailLabel.hide()
-        self.activateLabel.hide()
+        self.addLabel.hide()
         self.shutDownLabel.hide()
+        self.emailListLabel.hide()
         
         
         
