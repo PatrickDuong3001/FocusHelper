@@ -30,9 +30,7 @@ class appViewer():
     def updateListAppView(self):
         self.listView.clear() 
         for file in os.listdir(self.desktopPath):
-            if file.endswith(".url"):
-                self.addToListView(file.replace(".url",""),self.occupiedApps)
-            elif file.endswith(".lnk"):
+            if file.endswith(".lnk"):
                 self.addToListView(file.replace(".lnk",""),self.occupiedApps)   
                  
     def addTimedAppList(self,appName):

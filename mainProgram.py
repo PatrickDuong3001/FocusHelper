@@ -16,6 +16,7 @@ from os.path import exists
 
 #Initiate UI
 class UI(QMainWindow,QObject):
+    ##############################################################Set up UI and prepare applications########################################################################
     def __init__(self):
         super(UI,self).__init__()
         self.ui = loadUi("resources/FocusUI.ui",self)
@@ -26,19 +27,9 @@ class UI(QMainWindow,QObject):
         self.setupFile()
         self.pool = QThreadPool()
         self.pool.setMaxThreadCount(6)
-        
-    def setupFile(self):
-        #prepare a config file 
         self.config = ConfigParser()
-        if(exists("resources/emailList.cfg") == False):
-            f = open("resources/emailList.cfg","x")
-        self.config.add_section("emails")
-        self.config.add_section("passwords") 
-        self.config.add_section("current_email")
-        self.config.add_section("current_password")
-        with open("resources/emailList.cfg","w") as configfile:
-            self.config.write(configfile)
-                
+        self.config.read("resources/emailList.cfg")
+                        
         #define Widgets
         self.dialogBox = self.findChild(QPlainTextEdit,"dialogBox")
         self.listApps = self.findChild(QListWidget,"listApps")
@@ -71,6 +62,7 @@ class UI(QMainWindow,QObject):
         self.anAppChosenToLock = False
         self.quitAttempt = 0
         self.advancedModeHide()
+        self.checkEmailer()
         
         #menu bar
         option = self.menuBar().addMenu('Options')
@@ -89,6 +81,7 @@ class UI(QMainWindow,QObject):
         self.advancedMode.triggered.connect(self.advancedModeUnhide) 
         self.normalMode.triggered.connect(self.advancedModeHide)
         self.emailAdd.clicked.connect(self.emailPassHandler)
+        self.emailEnable.stateChanged.connect(self.emailEnablerCheckedOrNot)
         
         #initial dialog messages
         self.dialogBox.appendPlainText("Welcome to FocusHelper. Hope you enjoy it! :)")
@@ -106,7 +99,128 @@ class UI(QMainWindow,QObject):
     def setIcon(self):
         appIcon = QIcon("resources/focusIcon.png")
         self.setWindowIcon(appIcon)
+    #######################################################################################################################################################################
     
+    ################################################################These methods handle Emailer and File Writing##########################################################
+    def setupFile(self):
+        #prepare a config file 
+        if(exists("resources/emailList.cfg") == False):
+            f = open("resources/emailList.cfg","x")
+            self.config.add_section("emails")
+            self.config.add_section("passwords") 
+            self.config.add_section("current_email")
+            self.config.add_section("current_password")
+            self.config.add_section("emailer_enable")
+            with open("resources/emailList.cfg","w") as configfile:
+                self.config.write(configfile)
+    
+    def checkEmailer(self):
+        if(self.config.items("emailer_enable").__len__() == 0):
+            self.emailEnable.setChecked(False)
+            self.disableEnableEmailComponents(0)
+        else:
+            self.emailEnable.setChecked(True)
+    
+    def disableEnableEmailComponents(self,control):
+        if control == 0:
+            print("enable False")
+            self.emailInsert.setEnabled(False)
+            self.passInsert.setEnabled(False)
+            self.emailList.setEnabled(False)
+        else:
+            print("enable True")
+            self.emailInsert.setEnabled(True)
+            self.passInsert.setEnabled(True)
+            self.emailList.setEnabled(True)
+    
+    def emailEnablerCheckedOrNot(self):
+        if (self.emailEnable.isChecked() == False):
+            print("ask password here,then disable email components")
+            self.disableEnableEmailComponents(0)
+        else:
+            self.disableEnableEmailComponents(1)
+            self.config.set("emailer_enable","enabled","1") 
+            with open("resources/emailList.cfg","w") as configfile:
+                self.config.write(configfile)
+    
+    def emailPassHandler(self):
+        email =  self.emailInsert.text()
+        password = self.passInsert.text()
+        msgBox = QMessageBox()
+        msgBox.setIcon(QMessageBox.Warning)
+        msgBox.setWindowTitle("WARNING")
+        msgBox.setStandardButtons(QMessageBox.Ok)
+        if(len(email) == 0 and len(password) == 0):
+            msgBox.setText("Please enter your email and password!")
+            msgBox.exec()
+        elif(len(email) == 0 and len(password) > 0):
+            msgBox.setText("Please enter your email!")
+            msgBox.exec()
+        elif(len(email) > 0 and len(password) == 0):
+            msgBox.setText("Please enter your password!")
+            msgBox.exec()
+        else: 
+            emailManage = emailManager.emailManager(self.emailList)
+            valid = emailManage.emailValidator(email)
+            print(valid)
+            if (valid == 0):
+                msgBox.setText("Please enter a valid email!")
+                msgBox.exec()
+            elif (valid == 1):
+                msgBox.setText("Please enter a non-disposable email!")
+                msgBox.exec()
+            else: 
+                emailManage.saveEmails(email)
+    
+    def closeEvent(self, event):
+        appManage = appManager().getNumberOfOccupiedApps()
+        print(appManage)
+        if (appManage != 0):
+            msgBox = QMessageBox()
+            msgBox.setIcon(QMessageBox.Critical)
+            msgBox.setWindowTitle("ALERT")
+            msgBox.setStandardButtons(QMessageBox.Ok)
+            if (self.quitAttempt < 3):
+                self.quitAttempt += 1
+                msgBox.setText(f"Cannot close. Applications under lock or timer!\n Quit attempts: {self.quitAttempt}")
+                msgBox.exec()
+                event.ignore()
+            else: 
+                msgBox.setText("Quit attempts exceed 3. Notifying Super User...")
+                msgBox.exec()
+                event.accept()
+        else: 
+            event.accept()
+            
+    def advancedModeUnhide(self):
+        print("unhide??")
+        self.emailEnable.show()
+        self.emailInsert.show()
+        self.passInsert.show()
+        self.emailList.show()
+        self.shutDown.show()
+        self.emailAdd.show()
+        self.passLabel.show()
+        self.emailLabel.show()
+        self.addLabel.show()
+        self.shutDownLabel.show()
+        self.emailListLabel.show()
+        
+    def advancedModeHide(self):
+        self.emailEnable.hide()
+        self.emailInsert.hide()
+        self.passInsert.hide()
+        self.emailList.hide()
+        self.shutDown.hide()
+        self.emailAdd.hide()
+        self.passLabel.hide()
+        self.emailLabel.hide()
+        self.addLabel.hide()
+        self.shutDownLabel.hide()
+        self.emailListLabel.hide()
+    ###########################################################################################################################################################################      
+    
+    ################################################################These methods handle Timer and Locker######################################################################
     def setControl(self,controlType):
         if controlType == 1: #timeStopChosen signal
             self.timeStopChosen = True 
@@ -194,79 +308,8 @@ class UI(QMainWindow,QObject):
                 msgBox.setText("Please select a duration")
             else: 
                 msgBox.setText("Please select an app")
-            msgBox.exec()
-    
-    def closeEvent(self, event):
-        appManage = appManager().getNumberOfOccupiedApps()
-        print(appManage)
-        if (appManage != 0):
-            msgBox = QMessageBox()
-            msgBox.setIcon(QMessageBox.Critical)
-            msgBox.setWindowTitle("ALERT")
-            msgBox.setStandardButtons(QMessageBox.Ok)
-            if (self.quitAttempt < 3):
-                self.quitAttempt += 1
-                msgBox.setText(f"Cannot close. Applications under lock or timer!\n Quit attempts: {self.quitAttempt}")
-                msgBox.exec()
-                event.ignore()
-            else: 
-                msgBox.setText("Quit attempts exceed 3. Notifying Super User...")
-                msgBox.exec()
-                event.accept()
-        else: 
-            event.accept()
-    
-    def advancedModeUnhide(self):
-        print("unhide??")
-        self.emailEnable.show()
-        self.emailInsert.show()
-        self.passInsert.show()
-        self.emailList.show()
-        self.shutDown.show()
-        self.emailAdd.show()
-        self.passLabel.show()
-        self.emailLabel.show()
-        self.addLabel.show()
-        self.shutDownLabel.show()
-        self.emailListLabel.show()
-        
-    def advancedModeHide(self):
-        self.emailEnable.hide()
-        self.emailInsert.hide()
-        self.passInsert.hide()
-        self.emailList.hide()
-        self.shutDown.hide()
-        self.emailAdd.hide()
-        self.passLabel.hide()
-        self.emailLabel.hide()
-        self.addLabel.hide()
-        self.shutDownLabel.hide()
-        self.emailListLabel.hide()
-            
-    def emailPassHandler(self):
-        emailManage = emailManager.emailManager(self.emailInsert,self.passInsert,self.emailList)
-        email =  self.emailInsert.text()
-        password = self.passInsert.text()
-        msgBox = QMessageBox()
-        msgBox.setIcon(QMessageBox.Warning)
-        msgBox.setWindowTitle("WARNING")
-        msgBox.setStandardButtons(QMessageBox.Ok)
-        if(len(email) == 0 and len(password) == 0):
-            msgBox.setText("Please enter your email and password!")
-        elif(len(email) == 0 and len(password) > 0):
-            msgBox.setText("Please enter your email!")
-        elif(len(email) > 0 and len(password) == 0):
-            msgBox.setText("Please enter your password!")
-        else: 
-            valid = emailManage.emailValidator(email)
-            print(valid)
-            if (valid == 0):
-                msgBox.setText("Please enter a valid email!")
-            elif (valid == 1):
-                msgBox.setText("Please enter a non-disposable email!")
-            else: 
-                msgBox.setText("Valid!")
-        msgBox.exec()
+            msgBox.exec()        
+    ############################################################################################################################################################################
         
 # Initialize the app
 app = QApplication(sys.argv)
