@@ -24,11 +24,10 @@ class UI(QMainWindow,QObject):
         self.setIcon()
         self.setWindowTitle("FocusHelper v1.0")
         self.show() 
-        self.setupFile()
         self.pool = QThreadPool()
         self.pool.setMaxThreadCount(6)
-        self.config = ConfigParser()
-        self.config.read("resources/emailList.cfg")
+        self.emailManage = emailManager.emailManager(self.emailList)
+        self.emailManage.setupFile()
                         
         #define Widgets
         self.dialogBox = self.findChild(QPlainTextEdit,"dialogBox")
@@ -102,24 +101,13 @@ class UI(QMainWindow,QObject):
     #######################################################################################################################################################################
     
     ################################################################These methods handle Emailer and File Writing##########################################################
-    def setupFile(self):
-        #prepare a config file 
-        if(exists("resources/emailList.cfg") == False):
-            f = open("resources/emailList.cfg","x")
-            self.config.add_section("emails")
-            self.config.add_section("passwords") 
-            self.config.add_section("current_email")
-            self.config.add_section("current_password")
-            self.config.add_section("emailer_enable")
-            with open("resources/emailList.cfg","w") as configfile:
-                self.config.write(configfile)
-    
     def checkEmailer(self):
-        if(self.config.items("emailer_enable").__len__() == 0):
+        if(self.emailManage.getEmailEnableStatus() == 0):
             self.emailEnable.setChecked(False)
             self.disableEnableEmailComponents(0)
         else:
             self.emailEnable.setChecked(True)
+            self.disableEnableEmailComponents(1)
     
     def disableEnableEmailComponents(self,control):
         if control == 0:
@@ -137,11 +125,10 @@ class UI(QMainWindow,QObject):
         if (self.emailEnable.isChecked() == False):
             print("ask password here,then disable email components")
             self.disableEnableEmailComponents(0)
+            self.emailManage.setEmailEnableStatus(0)
         else:
             self.disableEnableEmailComponents(1)
-            self.config.set("emailer_enable","enabled","1") 
-            with open("resources/emailList.cfg","w") as configfile:
-                self.config.write(configfile)
+            self.emailManage.setEmailEnableStatus(1)
     
     def emailPassHandler(self):
         email =  self.emailInsert.text()
@@ -160,8 +147,7 @@ class UI(QMainWindow,QObject):
             msgBox.setText("Please enter your password!")
             msgBox.exec()
         else: 
-            emailManage = emailManager.emailManager(self.emailList)
-            valid = emailManage.emailValidator(email)
+            valid = self.emailManage.emailValidator(email)
             print(valid)
             if (valid == 0):
                 msgBox.setText("Please enter a valid email!")
@@ -170,7 +156,8 @@ class UI(QMainWindow,QObject):
                 msgBox.setText("Please enter a non-disposable email!")
                 msgBox.exec()
             else: 
-                emailManage.saveEmails(email)
+                self.emailManage.saveEmails(email)
+                self.emailManage.displayEmailList()
     
     def closeEvent(self, event):
         appManage = appManager().getNumberOfOccupiedApps()
