@@ -7,7 +7,7 @@ class emailSender():
     this class put a lock on an app
     the class adopts multithreading model
     '''
-    def __init__(self):   
+    def __init__(self,email):   
         super().__init__()
         self.sendEmail = smtplib.SMTP('smtp.gmail.com', 587) # creates SMTP session
         self.sendEmail.starttls() # start TLS for security
@@ -20,7 +20,7 @@ class emailSender():
         self.text = f"The system detected several attempts to close FocusHelper at {self.currentHour}:{self.currentMin}"
         self.message = 'Subject: {}\n\n{}'.format(self.subject, self.text) # message to be sent
         
-        self.sendEmail.sendmail("focushelperadm@gmail.com", "baophuc2000@gmail.com", self.message,"1") # sending the mail
+        self.sendEmail.sendmail("focushelperadm@gmail.com", f"{email}", self.message,"1") # sending the mail
         self.sendEmail.quit() # terminating the session
 
 emailSender()
