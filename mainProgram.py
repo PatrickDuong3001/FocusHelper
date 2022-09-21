@@ -1,4 +1,5 @@
-from PyQt5.QtWidgets import QMainWindow, QApplication, QDateTimeEdit, QSlider, QPushButton, QListWidget, QPlainTextEdit, QMessageBox,QCheckBox,QComboBox,QLineEdit,QLabel
+from PyQt5.QtWidgets import QMainWindow, QApplication, QDateTimeEdit, QSlider, QPushButton, QListWidget, QPlainTextEdit, QMessageBox,QCheckBox,QMenu,QLineEdit,QLabel
+from PyQt5 import QtWidgets
 from PyQt5.uic import loadUi
 from PyQt5.QtGui import QIcon
 from functools import partial
@@ -81,6 +82,7 @@ class UI(QMainWindow,QObject):
         self.normalMode.triggered.connect(self.advancedModeHide)
         self.emailAdd.clicked.connect(self.emailPassHandler)
         self.emailEnable.stateChanged.connect(self.emailEnablerCheckedOrNot)
+        self.emailList.installEventFilter(self)
         
         #initial dialog messages
         self.dialogBox.appendPlainText("Welcome to FocusHelper. Hope you enjoy it! :)")
@@ -156,9 +158,21 @@ class UI(QMainWindow,QObject):
                 msgBox.setText("Please enter a non-disposable email!")
                 msgBox.exec()
             else: 
-                self.emailManage.saveEmails(email)
+                self.emailManage.saveEmails(email,password)
                 self.emailManage.displayEmailList()
     
+    def eventFilter(self, source, event):   #context menu for emails in email list
+        if(event.type() == QtCore.QEvent.ContextMenu and source is self.emailList):
+            menu = QMenu()
+            menu.addAction("Activate")
+            menu.addAction("Delete")
+            menu.addAction("Change Password")
+            if menu.exec_(event.globalPos()):
+                item = source.itemAt(event.pos())
+                print(item.text())
+            return True
+        return super(UI,self).eventFilter(source, event)
+                
     def closeEvent(self, event):
         appManage = appManager().getNumberOfOccupiedApps()
         print(appManage)

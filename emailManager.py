@@ -7,7 +7,7 @@ import is_disposable_email
 from os.path import exists
 from configparser import ConfigParser
 
-emailsDisplayed = []
+emailsDisplayedDict = {}
 class emailManager():
     def __init__(self,emailList):   
         super().__init__()
@@ -42,22 +42,34 @@ class emailManager():
         else:
             return 0   
         
-    def saveEmails(self,email):
-        if (email in emailsDisplayed):
+    def saveEmails(self,email,password):
+        if (email in emailsDisplayedDict):
             pass
         else:
             emailIndex = self.countEmails()+1
             self.config.set("emails",f"email_{emailIndex}",email) 
             with open("resources/emailList.cfg","w") as configfile:
                 self.config.write(configfile)
-            self.addToEmailDisplayedList(email)
+            self.savePasswords(emailIndex,password)
+            self.addToEmailDisplayedDict(email,password)
+    
+    def savePasswords(self,index,password):
+        self.config.set("passwords",f"pass_{index}",password) 
+        with open("resources/emailList.cfg","w") as configfile:
+            self.config.write(configfile)
     
     def emailListOnStart(self):
+        tempForEmails = []
+        i = 0
         for (key, val) in self.getEmails():
-            self.addToEmailDisplayedList(val)
+            self.addToEmailDisplayedDict(val,None)
+            tempForEmails.append(val)
+        for(key,val) in self.getPasswords():
+            self.addToEmailDisplayedDict(tempForEmails[i],val)
+            i+=1
         
     def displayEmailList(self,onStart=None):
-        print(emailsDisplayed)
+        print(emailsDisplayedDict)
         if (onStart == None):
             self.emailList.clear()
             for (key, val) in self.getEmails():
@@ -75,6 +87,9 @@ class emailManager():
         
     def getEmails(self):
         return self.config.items("emails")
+    
+    def getPasswords(self):
+        return self.config.items("passwords")
 
     def setChosenEmail(self,email):
         self.config.set("chosen_email","email",email) 
@@ -95,8 +110,8 @@ class emailManager():
             with open("resources/emailList.cfg","w") as configfile:
                 self.config.write(configfile)
     
-    def addToEmailDisplayedList(self,email):
-        emailsDisplayed.append(email)
+    def addToEmailDisplayedDict(self,email,password):
+        emailsDisplayedDict[email] = password
                 
         #if timedAppList != None and itemToAdd in timedAppList:
         #   item.setFlags(Qt.NoItemFlags)
