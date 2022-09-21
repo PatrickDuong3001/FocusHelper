@@ -104,10 +104,12 @@ class UI(QMainWindow,QObject):
     
     ################################################################These methods handle Emailer and File Writing##########################################################
     def checkEmailer(self):
-        if(self.emailManage.getEmailEnableStatus() == 0):
+        if(self.emailManage.getEmailEnableStatus() in ["0",None]):
+            print("check emailer 0")
             self.emailEnable.setChecked(False)
             self.disableEnableEmailComponents(0)
         else:
+            print("check emailer 1")
             self.emailEnable.setChecked(True)
             self.disableEnableEmailComponents(1)
     
@@ -117,11 +119,13 @@ class UI(QMainWindow,QObject):
             self.emailInsert.setEnabled(False)
             self.passInsert.setEnabled(False)
             self.emailList.setEnabled(False)
+            self.emailAdd.setEnabled(False)
         else:
             print("enable True")
             self.emailInsert.setEnabled(True)
             self.passInsert.setEnabled(True)
             self.emailList.setEnabled(True)
+            self.emailAdd.setEnabled(True)
     
     def emailEnablerCheckedOrNot(self):
         if (self.emailEnable.isChecked() == False):
