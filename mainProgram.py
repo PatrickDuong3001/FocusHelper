@@ -12,8 +12,6 @@ from appManager import appManager
 import sys
 from PyQt5.QtCore import QThreadPool, QObject
 import emailManager
-from configparser import ConfigParser
-from os.path import exists
 
 #Initiate UI
 class UI(QMainWindow,QObject):
@@ -168,15 +166,28 @@ class UI(QMainWindow,QObject):
     def eventFilter(self, source, event):   #context menu for emails in email list
         if(event.type() == QtCore.QEvent.ContextMenu and source is self.emailList):
             menu = QMenu()
-            menu.addAction("Activate")
-            menu.addAction("Delete")
-            menu.addAction("Change Password")
-            if menu.exec_(event.globalPos()):
-                item = source.itemAt(event.pos())
-                print(item.text())
+            activateAction = menu.addAction("Activate")
+            deleteAction = menu.addAction("Delete")
+            changePassAction = menu.addAction("Change Password")
+            action = menu.exec_(event.globalPos())
+            if (action == activateAction):
+                print("Activate")
+                chosenEmail = source.itemAt(event.pos()).text()
+                self.passwordPrompt(chosenEmail)
             return True
         return super(UI,self).eventFilter(source, event)
-                
+    
+    def passwordPrompt(self,email):
+        dlg =  QtWidgets.QInputDialog(self)          
+        dlg.setInputMode(QtWidgets.QInputDialog.TextInput) 
+        dlg.setLabelText("Please Enter Password:")   
+        dlg.setFixedSize(350,100)              
+        dlg.setWindowTitle("PASSWORD")       
+        dlg.exec_()   
+        #self.emailManage.passwordVerifier(email,dlg.textValue())
+        dlg.textValue()
+        
+            
     def closeEvent(self, event):
         appManage = appManager().getNumberOfOccupiedApps()
         print(appManage)
