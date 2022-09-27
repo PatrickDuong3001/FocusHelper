@@ -60,7 +60,6 @@ class UI(QMainWindow,QObject):
         self.anAppChosenToLock = False
         self.quitAttempt = 0
         self.advancedModeHide()
-        self.checkEmailer()
         
         #menu bar
         option = self.menuBar().addMenu('Options')
@@ -79,7 +78,6 @@ class UI(QMainWindow,QObject):
         self.advancedMode.triggered.connect(self.advancedModeUnhide) 
         self.normalMode.triggered.connect(self.advancedModeHide)
         self.emailAdd.clicked.connect(self.emailPassHandler)
-        self.emailEnable.stateChanged.connect(self.emailEnablerCheckedOrNot)
         self.emailList.installEventFilter(self)
         
         #initial dialog messages
@@ -101,39 +99,6 @@ class UI(QMainWindow,QObject):
     #######################################################################################################################################################################
     
     ################################################################These methods handle Emailer and File Writing##########################################################
-    def checkEmailer(self):
-        if(self.emailManage.getEmailEnableStatus() in ["0",None]):
-            print("check emailer 0")
-            self.emailEnable.setChecked(False)
-            self.disableEnableEmailComponents(0)
-        else:
-            print("check emailer 1")
-            self.emailEnable.setChecked(True)
-            self.disableEnableEmailComponents(1)
-    
-    def disableEnableEmailComponents(self,control):
-        if control == 0:
-            print("enable False")
-            self.emailInsert.setEnabled(False)
-            self.passInsert.setEnabled(False)
-            self.emailList.setEnabled(False)
-            self.emailAdd.setEnabled(False)
-        else:
-            print("enable True")
-            self.emailInsert.setEnabled(True)
-            self.passInsert.setEnabled(True)
-            self.emailList.setEnabled(True)
-            self.emailAdd.setEnabled(True)
-    
-    def emailEnablerCheckedOrNot(self):
-        if (self.emailEnable.isChecked() == False):
-            print("ask password here,then disable email components")
-            self.disableEnableEmailComponents(0)
-            self.emailManage.setEmailEnableStatus(0)
-        else:
-            self.disableEnableEmailComponents(1)
-            self.emailManage.setEmailEnableStatus(1)
-    
     def emailPassHandler(self):
         email =  self.emailInsert.text()
         password = self.passInsert.text()
@@ -166,18 +131,26 @@ class UI(QMainWindow,QObject):
     def eventFilter(self, source, event):   #context menu for emails in email list
         if(event.type() == QtCore.QEvent.ContextMenu and source is self.emailList):
             menu = QMenu()
-            activateAction = menu.addAction("Activate")
-            deleteAction = menu.addAction("Delete")
-            changePassAction = menu.addAction("Change Password")
+            activateAction = None
+            chosenEmail = source.itemAt(event.pos()).text()
+            if chosenEmail != self.emailManage.getChosenEmail():
+                activateAction = menu.addAction("Activate")
+                deleteAction = menu.addAction("Delete")
+                changePassAction = menu.addAction("Change Password")
+            deactivateAction = menu.addAction("Deactivate")
             action = menu.exec_(event.globalPos())
-            if (action == activateAction):
-                print("Activate")
-                chosenEmail = source.itemAt(event.pos()).text()
-                self.passwordPrompt(chosenEmail)
-            return True
+            if action != None:
+                if (action == activateAction):
+                    print("Activate")
+                    self.passwordPrompt(chosenEmail)
+                elif action == deleteAction:
+                    print("Delete")
+                    self.passwordPrompt(chosenEmail,1)
+                elif action == deactivateAction:
+                    print("deactivate")
         return super(UI,self).eventFilter(source, event)
     
-    def passwordPrompt(self,email):
+    def passwordPrompt(self,email,forDelete=None):
         dlg =  QtWidgets.QInputDialog(self)          
         dlg.setInputMode(QtWidgets.QInputDialog.TextInput) 
         dlg.setLabelText("Please Enter Password:")   
@@ -185,8 +158,27 @@ class UI(QMainWindow,QObject):
         dlg.setWindowTitle("PASSWORD")       
         dlg.exec_()   
         #self.emailManage.passwordVerifier(email,dlg.textValue())
-        dlg.textValue()
-        
+        passwordReturn = self.emailManage.passwordVerifier(email,dlg.textValue())
+        msgBox = QMessageBox()
+        msgBox.setIcon(QMessageBox.Warning)
+        msgBox.setWindowTitle("WARNING")
+        msgBox.setStandardButtons(QMessageBox.Ok)
+        if forDelete == None:
+            if passwordReturn == 0:
+                msgBox.setText("Wrong/No Password")
+                msgBox.exec()
+            else:
+                msgBox.setText("Email Activated")
+                msgBox.exec()
+        else: 
+            if passwordReturn == 0:
+                msgBox.setText("Wrong/No Password")
+                msgBox.exec()
+            else:
+                self.emailManage.deleteEmailFromDict(email)
+                #self.emailManage.displayEmailList()
+                msgBox.setText("Email Deleted")
+                msgBox.exec()
             
     def closeEvent(self, event):
         appManage = appManager().getNumberOfOccupiedApps()
@@ -210,7 +202,6 @@ class UI(QMainWindow,QObject):
             
     def advancedModeUnhide(self):
         print("unhide??")
-        self.emailEnable.show()
         self.emailInsert.show()
         self.passInsert.show()
         self.emailList.show()
@@ -223,7 +214,6 @@ class UI(QMainWindow,QObject):
         self.emailListLabel.show()
         
     def advancedModeHide(self):
-        self.emailEnable.hide()
         self.emailInsert.hide()
         self.passInsert.hide()
         self.emailList.hide()

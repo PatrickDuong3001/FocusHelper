@@ -24,7 +24,6 @@ class emailManager():
             self.config.add_section("passwords") 
             self.config.add_section("current_email")
             self.config.add_section("current_password")
-            self.config.add_section("emailer_enable")
             self.config.add_section("chosen_email")
             with open("resources/emailList.cfg","w") as configfile:
                 self.config.write(configfile)
@@ -96,22 +95,21 @@ class emailManager():
         with open("resources/emailList.cfg","w") as configfile:
             self.config.write(configfile)
     
-    def getEmailEnableStatus(self):
-        for (key, val) in self.config.items("emailer_enable"):
-            return val
-    
-    def setEmailEnableStatus(self,option):
-        if (option == 1):
-            self.config.set("emailer_enable","enabled","1") 
-            with open("resources/emailList.cfg","w") as configfile:
-                self.config.write(configfile)
-        else:
-            self.config.set("emailer_enable","enabled","0") 
-            with open("resources/emailList.cfg","w") as configfile:
-                self.config.write(configfile)
-    
     def addToEmailDisplayedDict(self,email,password):
         emailsDisplayedDict[email] = password
-                
-        #if timedAppList != None and itemToAdd in timedAppList:
-        #   item.setFlags(Qt.NoItemFlags)
+    
+    def passwordVerifier(self,email,password):
+        if password == emailsDisplayedDict[email]:
+            self.setChosenEmail(email)
+            return 1
+        return 0
+
+    def getChosenEmail(self):
+        for (key, val) in self.config.items("chosen_email"):
+            return val
+    
+    def deleteEmailFromDict(self,email):
+        emailsDisplayedDict.pop(email)
+        #have to rewrite the whole "emails" section in emailList.cfg since the index of deleted email is randomly specified by user
+        
+    
