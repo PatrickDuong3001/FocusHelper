@@ -136,24 +136,29 @@ class UI(QMainWindow,QObject):
             changePassAction = None
             deactivateAction = None
             
-            chosenEmail = source.itemAt(event.pos()).text()
-            if self.emailManage.getChosenEmail() == None or len(self.emailManage.getChosenEmail()) == 0:
-                activateAction = menu.addAction("Activate") #the activate option only pops up when there are no currently activated email
-            if chosenEmail != self.emailManage.getChosenEmail():
-                deleteAction = menu.addAction("Delete")
-                changePassAction = menu.addAction("Change Password")
-            else: 
-                deactivateAction = menu.addAction("Deactivate")
-            action = menu.exec_(event.globalPos())
-            if action != None:
-                if (action == activateAction):
-                    print("Activate")
-                    self.passwordPrompt(chosenEmail)
-                elif action == deleteAction:
-                    print("Delete")
-                    self.passwordPrompt(chosenEmail,1)
-                elif action == deactivateAction:
-                    print("deactivate")
+            try:
+                chosenEmail = source.itemAt(event.pos()).text()
+                if self.emailManage.getChosenEmail() == None or len(self.emailManage.getChosenEmail()) == 0:
+                    activateAction = menu.addAction("Activate") #the activate option only pops up when there are no currently activated email
+                if chosenEmail != self.emailManage.getChosenEmail():
+                    deleteAction = menu.addAction("Delete")
+                    changePassAction = menu.addAction("Change Password")
+                else: 
+                    deactivateAction = menu.addAction("Deactivate")
+                action = menu.exec_(event.globalPos())
+                if action != None:
+                    if (action == activateAction):
+                        print("Activate")
+                        self.passwordPrompt(chosenEmail)
+                    elif action == deleteAction:
+                        print("Delete")
+                        self.passwordPrompt(chosenEmail,1)
+                    elif action == deactivateAction:
+                        print("deactivate")
+                    elif action == changePassAction:
+                        print("changePassAction")
+            except:
+                print("exception happens")
         return super(UI,self).eventFilter(source, event)
     
     def passwordPrompt(self,email,forDelete=None):
@@ -182,7 +187,7 @@ class UI(QMainWindow,QObject):
                 msgBox.exec()
             else:
                 self.emailManage.deleteEmailFromDict(email)
-                #self.emailManage.displayEmailList()
+                self.emailManage.rewriteEmailPasswordListAfterDelete()
                 msgBox.setText("Email Deleted")
                 msgBox.exec()
             

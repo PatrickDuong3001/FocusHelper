@@ -6,6 +6,7 @@ import re
 import is_disposable_email
 from os.path import exists
 from configparser import ConfigParser
+import time
 
 emailsDisplayedDict = {}
 class emailManager():
@@ -22,14 +23,13 @@ class emailManager():
             f = open("resources/emailList.cfg","x")
             self.config.add_section("emails")
             self.config.add_section("passwords") 
-            self.config.add_section("current_email")
-            self.config.add_section("current_password")
             self.config.add_section("chosen_email")
             with open("resources/emailList.cfg","w") as configfile:
                 self.config.write(configfile)
         else: 
             self.emailListOnStart()
             self.displayEmailList(1)
+            chosen_email = self.getChosenEmail()
     
     def emailValidator(self,email):
         regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
@@ -107,9 +107,28 @@ class emailManager():
     def getChosenEmail(self):
         for (key, val) in self.config.items("chosen_email"):
             return val
-    
+        
+    def rewriteEmailPasswordListAfterDelete(self):
+        self.config.remove_section("emails")
+        self.config.remove_section("passwords")
+        time.sleep(1)
+        self.config.add_section("emails")
+        self.config.add_section("passwords")
+        i = 1
+        j = 1
+        for email in emailsDisplayedDict:
+            self.config.set("emails",f"email_{i}",email)
+            i += 1
+        for email,password in emailsDisplayedDict.items():
+            self.config.set("passwords",f"pass_{j}",password)
+            j += 1
+        with open("resources/emailList.cfg","w") as configfile:
+            self.config.write(configfile)
+        self.displayEmailList()
+            
     def deleteEmailFromDict(self,email):
         emailsDisplayedDict.pop(email)
+        print(emailsDisplayedDict)
         #have to rewrite the whole "emails" section in emailList.cfg since the index of deleted email is randomly specified by user
         
     
