@@ -132,12 +132,18 @@ class UI(QMainWindow,QObject):
         if(event.type() == QtCore.QEvent.ContextMenu and source is self.emailList):
             menu = QMenu()
             activateAction = None
+            deleteAction = None
+            changePassAction = None
+            deactivateAction = None
+            
             chosenEmail = source.itemAt(event.pos()).text()
+            if self.emailManage.getChosenEmail() == None or len(self.emailManage.getChosenEmail()) == 0:
+                activateAction = menu.addAction("Activate") #the activate option only pops up when there are no currently activated email
             if chosenEmail != self.emailManage.getChosenEmail():
-                activateAction = menu.addAction("Activate")
                 deleteAction = menu.addAction("Delete")
                 changePassAction = menu.addAction("Change Password")
-            deactivateAction = menu.addAction("Deactivate")
+            else: 
+                deactivateAction = menu.addAction("Deactivate")
             action = menu.exec_(event.globalPos())
             if action != None:
                 if (action == activateAction):
