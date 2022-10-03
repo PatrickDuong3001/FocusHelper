@@ -359,4 +359,4 @@ class UI(QMainWindow,QObject):
 # Initialize the app
 app = QApplication(sys.argv)
 UIWindow = UI()
-app.exec_() 
+sys.exit(app.exec()) 
