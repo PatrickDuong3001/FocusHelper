@@ -218,20 +218,23 @@ class UI(QMainWindow,QObject):
     def closeEvent(self, event):
         appManage = appManager().getNumberOfOccupiedApps()
         print(appManage)
-        if (appManage != 0):
-            msgBox = QMessageBox()
-            msgBox.setIcon(QMessageBox.Critical)
-            msgBox.setWindowTitle("ALERT")
-            msgBox.setStandardButtons(QMessageBox.Ok)
-            msgBox.setWindowIcon(QIcon("resources/focusIcon.png"))
-            if (self.quitAttempt < 3):
-                self.quitAttempt += 1
-                msgBox.setText(f"Cannot close. Applications under lock or timer!\n Quit attempts: {self.quitAttempt}")
-                msgBox.exec()
-                event.ignore()
-            else: 
-                msgBox.setText("Quit attempts exceed 3. Notifying Super User...")
-                msgBox.exec()
+        if self.emailManage.getChosenEmail() not in [0,None,""]: 
+            if (appManage != 0):
+                msgBox = QMessageBox()
+                msgBox.setIcon(QMessageBox.Critical)
+                msgBox.setWindowTitle("ALERT")
+                msgBox.setStandardButtons(QMessageBox.Ok)
+                msgBox.setWindowIcon(QIcon("resources/focusIcon.png"))
+                if (self.quitAttempt < 3):
+                    self.quitAttempt += 1
+                    msgBox.setText(f"Cannot close. Applications under lock or timer!\n Quit attempts: {self.quitAttempt}")
+                    msgBox.exec()
+                    event.ignore()
+                else: 
+                    msgBox.setText("Quit attempts exceed 3. Notifying Super User...")
+                    msgBox.exec()
+                    event.accept()
+            else:
                 event.accept()
         else: 
             event.accept()
@@ -356,4 +359,4 @@ class UI(QMainWindow,QObject):
 # Initialize the app
 app = QApplication(sys.argv)
 UIWindow = UI()
-sys.exit(app.exec_()) 
+app.exec_() 
