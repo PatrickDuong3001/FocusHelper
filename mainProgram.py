@@ -12,6 +12,7 @@ from appManager import appManager
 import sys
 from PyQt5.QtCore import QThreadPool, QObject
 import emailManager
+import time
 
 #Initiate UI
 class UI(QMainWindow,QObject):
@@ -24,7 +25,7 @@ class UI(QMainWindow,QObject):
         self.setWindowTitle("FocusHelper v1.0")
         self.show() 
         self.pool = QThreadPool()
-        self.pool.setMaxThreadCount(6)
+        self.pool.setMaxThreadCount(12)
         self.emailManage = emailManager.emailManager(self.emailList)
         self.emailManage.setupFile()
                         
@@ -106,6 +107,7 @@ class UI(QMainWindow,QObject):
         msgBox.setIcon(QMessageBox.Warning)
         msgBox.setWindowTitle("WARNING")
         msgBox.setStandardButtons(QMessageBox.Ok)
+        msgBox.setWindowIcon(QIcon("resources/focusIcon.png"))
         if(len(email) == 0 and len(password) == 0):
             msgBox.setText("Please enter your email and password!")
             msgBox.exec()
@@ -149,24 +151,27 @@ class UI(QMainWindow,QObject):
                 if action != None:
                     if (action == activateAction):
                         print("Activate")
-                        self.passwordPrompt(chosenEmail)
+                        self.passwordPrompt(chosenEmail,0)
                     elif action == deleteAction:
                         print("Delete")
                         self.passwordPrompt(chosenEmail,1)
                     elif action == deactivateAction:
+                        self.passwordPrompt(chosenEmail,2)
                         print("deactivate")
                     elif action == changePassAction:
                         print("changePassAction")
+                        self.passwordPrompt(chosenEmail,3)
             except:
                 print("exception happens")
         return super(UI,self).eventFilter(source, event)
     
-    def passwordPrompt(self,email,forDelete=None):
+    def passwordPrompt(self,email,actionType):
         dlg =  QtWidgets.QInputDialog(self)          
         dlg.setInputMode(QtWidgets.QInputDialog.TextInput) 
         dlg.setLabelText("Please Enter Password:")   
         dlg.setFixedSize(350,100)              
         dlg.setWindowTitle("PASSWORD")       
+        dlg.setWindowIcon(QIcon("resources/focusIcon.png"))
         dlg.exec_()   
         #self.emailManage.passwordVerifier(email,dlg.textValue())
         passwordReturn = self.emailManage.passwordVerifier(email,dlg.textValue())
@@ -174,14 +179,16 @@ class UI(QMainWindow,QObject):
         msgBox.setIcon(QMessageBox.Warning)
         msgBox.setWindowTitle("WARNING")
         msgBox.setStandardButtons(QMessageBox.Ok)
-        if forDelete == None:
+        msgBox.setWindowIcon(QIcon("resources/focusIcon.png"))
+        if actionType == 0:
             if passwordReturn == 0:
                 msgBox.setText("Wrong/No Password")
                 msgBox.exec()
             else:
+                self.emailManage.emailActivate(email)
                 msgBox.setText("Email Activated")
                 msgBox.exec()
-        else: 
+        elif actionType == 1: 
             if passwordReturn == 0:
                 msgBox.setText("Wrong/No Password")
                 msgBox.exec()
@@ -190,6 +197,23 @@ class UI(QMainWindow,QObject):
                 self.emailManage.rewriteEmailPasswordListAfterDelete()
                 msgBox.setText("Email Deleted")
                 msgBox.exec()
+        elif actionType == 2:
+            if passwordReturn == 0:
+                msgBox.setText("Wrong/No Password")
+                msgBox.exec()
+            else:
+                self.emailManage.deleteChosenEmail()
+                msgBox.setText("Email Deactivated")
+                msgBox.exec()
+        elif actionType == 3:
+            if passwordReturn == 0:
+                msgBox.setText("Wrong/No Password")
+                msgBox.exec()
+            else:
+                time.sleep(0.5)
+                dlg.setLabelText("Enter New Password") 
+                dlg.exec_()   
+                self.emailManage.changeEmailPassword(email,dlg.textValue())
             
     def closeEvent(self, event):
         appManage = appManager().getNumberOfOccupiedApps()
@@ -199,6 +223,7 @@ class UI(QMainWindow,QObject):
             msgBox.setIcon(QMessageBox.Critical)
             msgBox.setWindowTitle("ALERT")
             msgBox.setStandardButtons(QMessageBox.Ok)
+            msgBox.setWindowIcon(QIcon("resources/focusIcon.png"))
             if (self.quitAttempt < 3):
                 self.quitAttempt += 1
                 msgBox.setText(f"Cannot close. Applications under lock or timer!\n Quit attempts: {self.quitAttempt}")
@@ -248,7 +273,7 @@ class UI(QMainWindow,QObject):
         elif controlType == 4: #anAppChosenToLock signal
             self.anAppChosenToLock = True 
             
-    def activatedCountDown(self):            
+    def activatedCountDown(self):      
         if (self.anAppChosenToStop and self.timeStopChosen) == True:
             if (appManager().getNumberOfOccupiedApps() < 6):
                 items = self.listApps2.selectedItems()
@@ -265,9 +290,9 @@ class UI(QMainWindow,QObject):
                 self.appStop = appStopper(targetHour,targetMin,self.listApps,self.listApps2)
                 self.pool.start(self.appStop.timerActivate)
                 
+                self.dateTime.setDateTime(QtCore.QDateTime.currentDateTime())
                 self.timeStopChosen = False
                 self.anAppChosenToStop = False
-                self.dateTime.setDateTime(QtCore.QDateTime.currentDateTime())
             else:
                 msgBox = QMessageBox()
                 msgBox.setIcon(QMessageBox.Warning)

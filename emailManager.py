@@ -7,6 +7,7 @@ import is_disposable_email
 from os.path import exists
 from configparser import ConfigParser
 import time
+from PyQt5.QtGui import QColor
 
 emailsDisplayedDict = {}
 class emailManager():
@@ -74,11 +75,15 @@ class emailManager():
             for (key, val) in self.getEmails():
                 item = QListWidgetItem()
                 item.setText(val)
+                if val == self.getChosenEmail():
+                    item.setBackground(QColor("#f0027f"))
                 self.emailList.addItem(item)
         else:
             for (key, val) in self.getEmails():
                 item = QListWidgetItem()
                 item.setText(val)
+                if val == self.getChosenEmail():
+                    item.setBackground(QColor("#f0027f"))
                 self.emailList.addItem(item)
         
     def countEmails(self):
@@ -90,6 +95,10 @@ class emailManager():
     def getPasswords(self):
         return self.config.items("passwords")
 
+    def emailActivate(self,email):
+        self.setChosenEmail(email)
+        self.displayEmailList()
+    
     def setChosenEmail(self,email):
         self.config.set("chosen_email","email",email) 
         with open("resources/emailList.cfg","w") as configfile:
@@ -100,7 +109,6 @@ class emailManager():
     
     def passwordVerifier(self,email,password):
         if password == emailsDisplayedDict[email]:
-            self.setChosenEmail(email)
             return 1
         return 0
 
@@ -125,7 +133,22 @@ class emailManager():
         with open("resources/emailList.cfg","w") as configfile:
             self.config.write(configfile)
         self.displayEmailList()
+    
+    def deleteChosenEmail(self):
+        self.config.remove_section("chosen_email")
+        time.sleep(1)
+        self.config.add_section("chosen_email")
+        with open("resources/emailList.cfg","w") as configfile:
+            self.config.write(configfile)
+        self.displayEmailList()
             
+    def changeEmailPassword(self,email,newPassword):
+        self.changeEmailPasswordinDict(email,newPassword)
+        self.rewriteEmailPasswordListAfterDelete()
+        
+    def changeEmailPasswordinDict(self,email,newPassword):
+        emailsDisplayedDict[email] = newPassword
+    
     def deleteEmailFromDict(self,email):
         emailsDisplayedDict.pop(email)
         print(emailsDisplayedDict)
