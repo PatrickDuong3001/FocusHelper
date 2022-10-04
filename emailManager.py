@@ -119,7 +119,7 @@ class emailManager():
     def rewriteEmailPasswordListAfterDelete(self):
         self.config.remove_section("emails")
         self.config.remove_section("passwords")
-        time.sleep(1)
+        time.sleep(0.5)
         self.config.add_section("emails")
         self.config.add_section("passwords")
         i = 1
@@ -136,7 +136,7 @@ class emailManager():
     
     def deleteChosenEmail(self):
         self.config.remove_section("chosen_email")
-        time.sleep(1)
+        time.sleep(0.5)
         self.config.add_section("chosen_email")
         with open("resources/emailList.cfg","w") as configfile:
             self.config.write(configfile)

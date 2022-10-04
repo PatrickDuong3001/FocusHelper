@@ -13,6 +13,8 @@ import sys
 from PyQt5.QtCore import QThreadPool, QObject
 import emailManager
 import time
+import subprocess
+import emailSender
 
 #Initiate UI
 class UI(QMainWindow,QObject):
@@ -233,11 +235,15 @@ class UI(QMainWindow,QObject):
                 else: 
                     msgBox.setText("Quit attempts exceed 3. Notifying Super User...")
                     msgBox.exec()
+                    emailSender.emailSender(self.emailManage.getChosenEmail())
                     event.accept()
+                    subprocess.call(f"TASKKILL /F /T /IM FocusHelper.exe >nul 2>&1", shell=True)
             else:
                 event.accept()
+                subprocess.call(f"TASKKILL /F /T /IM FocusHelper.exe >nul 2>&1", shell=True)
         else: 
             event.accept()
+            subprocess.call(f"TASKKILL /F /T /IM FocusHelper.exe >nul 2>&1", shell=True)
             
     def advancedModeUnhide(self):
         print("unhide??")

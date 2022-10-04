@@ -1,5 +1,4 @@
 from PyQt5 import QtTest
-from PyQt5.QtWidgets import QPlainTextEdit
 
 class customTimer():
     '''

@@ -22,5 +22,3 @@ class emailSender():
         
         self.sendEmail.sendmail("focushelperadm@gmail.com", f"{email}", self.message,"1") # sending the mail
         self.sendEmail.quit() # terminating the session
-
-emailSender()
