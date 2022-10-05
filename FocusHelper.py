@@ -30,6 +30,9 @@ class UI(QMainWindow,QObject):
         self.pool.setMaxThreadCount(12)
         self.emailManage = emailManager.emailManager(self.emailList)
         self.emailManage.setupFile()
+        self.errorFormat = '<span style="color:red">{}</span>'
+        self.warningFormat = '<span style="color:yellow">{}</span>'
+        self.validFormat = '<span style="color:green">{}</span>'
                         
         #define Widgets
         self.dialogBox = self.findChild(QPlainTextEdit,"dialogBox")
@@ -81,6 +84,7 @@ class UI(QMainWindow,QObject):
         self.advancedMode.triggered.connect(self.advancedModeUnhide) 
         self.normalMode.triggered.connect(self.advancedModeHide)
         self.emailAdd.clicked.connect(self.emailPassHandler)
+        self.shutDown.clicked.connect(self.forcedShutDown)
         self.emailList.installEventFilter(self)
         
         #initial dialog messages
@@ -111,21 +115,26 @@ class UI(QMainWindow,QObject):
         msgBox.setStandardButtons(QMessageBox.Ok)
         msgBox.setWindowIcon(QIcon("resources/focusIcon.png"))
         if(len(email) == 0 and len(password) == 0):
+            self.dialogBox.appendHtml(self.warningFormat.format("You didn't enter email or password!"))
             msgBox.setText("Please enter your email and password!")
             msgBox.exec()
         elif(len(email) == 0 and len(password) > 0):
+            self.dialogBox.appendHtml(self.warningFormat.format("You didn't enter email!"))
             msgBox.setText("Please enter your email!")
             msgBox.exec()
         elif(len(email) > 0 and len(password) == 0):
+            self.dialogBox.appendHtml(self.warningFormat.format("You didn't enter password!"))
             msgBox.setText("Please enter your password!")
             msgBox.exec()
         else: 
             valid = self.emailManage.emailValidator(email)
             print(valid)
             if (valid == 0):
+                self.dialogBox.appendHtml(self.warningFormat.format("You entered an invalid email!"))
                 msgBox.setText("Please enter a valid email!")
                 msgBox.exec()
             elif (valid == 1):
+                self.dialogBox.appendHtml(self.warningFormat.format("You entered a disposable email!"))
                 msgBox.setText("Please enter a non-disposable email!")
                 msgBox.exec()
             else: 
@@ -187,6 +196,7 @@ class UI(QMainWindow,QObject):
                 msgBox.setText("Wrong/No Password")
                 msgBox.exec()
             else:
+                self.dialogBox.appendHtml(self.validFormat.format("You activated email sender"))
                 self.emailManage.emailActivate(email)
                 msgBox.setText("Email Activated")
                 msgBox.exec()
@@ -195,6 +205,7 @@ class UI(QMainWindow,QObject):
                 msgBox.setText("Wrong/No Password")
                 msgBox.exec()
             else:
+                self.dialogBox.appendHtml(self.warningFormat.format("You deleted an email!"))
                 self.emailManage.deleteEmailFromDict(email)
                 self.emailManage.rewriteEmailPasswordListAfterDelete()
                 msgBox.setText("Email Deleted")
@@ -204,6 +215,7 @@ class UI(QMainWindow,QObject):
                 msgBox.setText("Wrong/No Password")
                 msgBox.exec()
             else:
+                self.dialogBox.appendHtml(self.errorFormat.format("You deactivated email sender!"))
                 self.emailManage.deleteChosenEmail()
                 msgBox.setText("Email Deactivated")
                 msgBox.exec()
@@ -216,6 +228,15 @@ class UI(QMainWindow,QObject):
                 dlg.setLabelText("Enter New Password") 
                 dlg.exec_()   
                 self.emailManage.changeEmailPassword(email,dlg.textValue())
+                self.dialogBox.appendHtml(self.warningFormat.format("You changed an email's password!"))
+        elif actionType == 4:
+            if passwordReturn == 0:
+                msgBox.setText("Wrong/No Password")
+                msgBox.exec()
+            else:
+                msgBox.setText("Quit already? I'm so disappointed in you!")
+                msgBox.exec()
+                subprocess.call(f"TASKKILL /F /T /IM FocusHelper.exe >nul 2>&1", shell=True)
             
     def closeEvent(self, event):
         appManage = appManager().getNumberOfOccupiedApps()
@@ -231,6 +252,7 @@ class UI(QMainWindow,QObject):
                     self.quitAttempt += 1
                     msgBox.setText(f"Cannot close. Applications under lock or timer!\n Quit attempts: {self.quitAttempt}")
                     msgBox.exec()
+                    self.dialogBox.appendHtml(self.errorFormat.format("Don't try to close the program!"))
                     event.ignore()
                 else: 
                     msgBox.setText("Quit attempts exceed 3. Notifying Super User...")
@@ -244,9 +266,16 @@ class UI(QMainWindow,QObject):
         else: 
             event.accept()
             subprocess.call(f"TASKKILL /F /T /IM FocusHelper.exe >nul 2>&1", shell=True)
+    
+    def forcedShutDown(self):
+        email = self.emailManage.getChosenEmail()
+        appInProcess = appManager().getNumberOfOccupiedApps()
+        if email not in [None,"",0] and appInProcess > 0:
+            self.passwordPrompt(email,4)
             
     def advancedModeUnhide(self):
         print("unhide??")
+        self.dialogBox.appendHtml(self.validFormat.format("You opened Advanced Mode menu"))
         self.emailInsert.show()
         self.passInsert.show()
         self.emailList.show()
@@ -286,6 +315,8 @@ class UI(QMainWindow,QObject):
         if (self.anAppChosenToStop and self.timeStopChosen) == True:
             if (appManager().getNumberOfOccupiedApps() < 6):
                 items = self.listApps2.selectedItems()
+                if items == []: #this is to take care of empty selected item
+                    return
                 print("in if")
                 for item in items:
                     self.appDetect2.addTimedAppList(item.text())
@@ -298,6 +329,7 @@ class UI(QMainWindow,QObject):
                             
                 self.appStop = appStopper(targetHour,targetMin,self.listApps,self.listApps2)
                 self.pool.start(self.appStop.timerActivate)
+                self.dialogBox.appendHtml(self.validFormat.format("You put a timer on an app"))
                 
                 self.dateTime.setDateTime(QtCore.QDateTime.currentDateTime())
                 self.timeStopChosen = False
@@ -309,6 +341,7 @@ class UI(QMainWindow,QObject):
                 msgBox.setStandardButtons(QMessageBox.Ok)
                 msgBox.setText("Cannot set lock or timer on 6+ applications!")
                 msgBox.exec()
+                self.dialogBox.appendHtml(self.warningFormat.format("Cannot set lock or timer on 6+ applications!"))
         else:
             msgBox = QMessageBox()
             msgBox.setIcon(QMessageBox.Warning)
@@ -327,6 +360,8 @@ class UI(QMainWindow,QObject):
         if(self.durationAlreadySet and self.anAppChosenToLock) == True:
             if (appManager().getNumberOfOccupiedApps() < 6):
                 items = self.listApps.selectedItems()
+                if items == []: #this is to take care of empty selected item
+                    return
                 print("in if locker??")
                 for item in items:
                     self.appDetect1.addLockedAppList(item.text())
@@ -338,6 +373,7 @@ class UI(QMainWindow,QObject):
                 
                 self.appLock = appLocker(duration,self.listApps,self.listApps2)
                 self.pool.start(self.appLock.countDownLockerActivate)
+                self.dialogBox.appendHtml(self.validFormat.format("You put a lock on an app"))
                 
                 self.durationAlreadySet = False
                 self.anAppChosenToLock = False
@@ -348,6 +384,7 @@ class UI(QMainWindow,QObject):
                 msgBox.setStandardButtons(QMessageBox.Ok)
                 msgBox.setText("Cannot set lock or timer on 6+ applications!")
                 msgBox.exec()
+                self.dialogBox.appendHtml(self.warningFormat.format("Cannot set lock or timer on 6+ applications!"))
         else: 
             msgBox = QMessageBox()
             msgBox.setIcon(QMessageBox.Warning)

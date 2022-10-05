@@ -1,5 +1,4 @@
 from PyQt5.QtWidgets import QListWidgetItem
-from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
 import os
 import win32com.client 
