@@ -1,5 +1,4 @@
 from PyQt5.QtWidgets import QListWidgetItem
-from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
 import os
 import win32com.client 
@@ -30,9 +29,7 @@ class appViewer():
     def updateListAppView(self):
         self.listView.clear() 
         for file in os.listdir(self.desktopPath):
-            if file.endswith(".url"):
-                self.addToListView(file.replace(".url",""),self.occupiedApps)
-            elif file.endswith(".lnk"):
+            if file.endswith(".lnk"):
                 self.addToListView(file.replace(".lnk",""),self.occupiedApps)   
                  
     def addTimedAppList(self,appName):
