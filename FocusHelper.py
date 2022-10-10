@@ -56,6 +56,10 @@ class UI(QMainWindow,QObject):
         self.addLabel = self.findChild(QLabel,"addLabel")
         self.shutDownLabel = self.findChild(QLabel,"shutDownLabel")
         self.emailListLabel = self.findChild(QLabel,"emailListLabel")
+        
+        self.webAdder = self.findChild(QPushButton,"webAdder")
+        self.webInsert = self.findChild(QLineEdit,"webInsert")
+        self.webList = self.findChild(QListWidget,"webList")
                 
         #controls
         self.activate1.setEnabled(False)
