@@ -3,25 +3,33 @@ from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
 import os
 import re
-from os.path import exists
-from configparser import ConfigParser
 import time
-from PyQt5.QtGui import QColor
 
-displayedWeb = []
+blockedWebList = []
 class websiteManager():
     def __init__(self,webList):   
         super().__init__()
         self.webList = webList
-        self.config = ConfigParser()
-        self.config.read("resources/webList.cfg")
-        
-    def fileHandler(self):
-        #prepare a config file 
-        if(exists("resources/webList.cfg") == False):
-            f = open("resources/webList.cfg","x")
-            self.config.add_section("websites")
-            with open("resources/webList.cfg","w") as configfile:
-                self.config.write(configfile)
-        else: 
-            print()
+                    
+    def addToBlockedList(self,web):
+        webUrl = None
+        if "www." not in web:
+            webUrl = "www." + web
+            if webUrl not in blockedWebList:
+                blockedWebList.append(webUrl)
+        else:
+            webUrl = web
+            if webUrl not in blockedWebList:
+                blockedWebList.append(webUrl)
+        self.displayWebList()
+            
+    def displayWebList(self):
+        self.webList.clear()
+        for web in blockedWebList:
+            item = QListWidgetItem()
+            item.setText(web)
+            self.webList.addItem(item)
+    
+    def removeWebFromBlockedList(self,web):
+        blockedWebList.remove(web)
+        self.displayWebList()

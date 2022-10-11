@@ -15,6 +15,7 @@ import emailManager
 import time
 import subprocess
 import emailSender
+import websiteManager
 
 #Initiate UI
 class UI(QMainWindow,QObject):
@@ -33,6 +34,7 @@ class UI(QMainWindow,QObject):
         self.errorFormat = '<span style="color:red">{}</span>'
         self.warningFormat = '<span style="color:yellow">{}</span>'
         self.validFormat = '<span style="color:green">{}</span>'
+        self.webManage = websiteManager.websiteManager(self.webList)
                         
         #define Widgets
         self.dialogBox = self.findChild(QPlainTextEdit,"dialogBox")
@@ -90,6 +92,8 @@ class UI(QMainWindow,QObject):
         self.emailAdd.clicked.connect(self.emailPassHandler)
         self.shutDown.clicked.connect(self.forcedShutDown)
         self.emailList.installEventFilter(self)
+        self.webAdder.clicked.connect(self.addToBlockList)
+        self.webList.installEventFilter(self)
         
         #initial dialog messages
         self.dialogBox.appendPlainText("Welcome to FocusHelper. Hope you enjoy it! :)")
@@ -110,7 +114,11 @@ class UI(QMainWindow,QObject):
     #######################################################################################################################################################################
     
     #########################################################These methods handle Website Blocker and file writing#########################################################
-    
+    def addToBlockList(self):
+        web = self.webInsert.text()
+        if web != None and len(web) != 0:
+            self.webManage.addToBlockedList(web)
+                
     #######################################################################################################################################################################
     
     ################################################################These methods handle Emailer and File Writing##########################################################
@@ -182,9 +190,23 @@ class UI(QMainWindow,QObject):
                         self.passwordPrompt(chosenEmail,3)
             except:
                 print("exception happens")
+        elif(event.type() == QtCore.QEvent.ContextMenu and source is self.webList):
+            menu = QMenu()
+            unblockAction = menu.addAction("Unblock")
+            try:
+                chosenWeb = source.itemAt(event.pos()).text()
+                action = menu.exec_(event.globalPos())
+                if action != None:
+                    if (action == unblockAction):
+                        print("unblock")
+                        chosenEmail = self.emailManage.getChosenEmail() 
+                        if chosenEmail not in [None,"", " "]:
+                            self.passwordPrompt(self.emailManage.getChosenEmail(),5,chosenWeb)
+            except:
+                print("exception happens")
         return super(UI,self).eventFilter(source, event)
     
-    def passwordPrompt(self,email,actionType):
+    def passwordPrompt(self,email,actionType,chosenWeb=None):
         dlg =  QtWidgets.QInputDialog(self)          
         dlg.setInputMode(QtWidgets.QInputDialog.TextInput) 
         dlg.setLabelText("Please Enter Password:")   
@@ -245,7 +267,15 @@ class UI(QMainWindow,QObject):
                 msgBox.setText("Quit already? I'm so disappointed in you!")
                 msgBox.exec()
                 subprocess.call(f"TASKKILL /F /T /IM FocusHelper.exe >nul 2>&1", shell=True)
-            
+        elif actionType == 5:
+            if passwordReturn == 0:
+                msgBox.setText("Wrong/No Password")
+                msgBox.exec()
+            else: 
+                msgBox.setText("Unblock Successfully!")
+                msgBox.exec()
+                self.webManage.removeWebFromBlockedList(chosenWeb)
+                
     def closeEvent(self, event):
         appManage = appManager().getNumberOfOccupiedApps()
         print(appManage)
