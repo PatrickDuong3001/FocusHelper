@@ -1,15 +1,16 @@
 from PyQt5.QtWidgets import QListWidgetItem
-from PyQt5 import QtCore
-from PyQt5.QtCore import Qt
-import os
-import re
 import time
+from os.path import exists
 
+hosts_path=r"C:\Windows\System32\drivers\etc\hosts"
+redirect="127.0.0.1"
 blockedWebList = []
 class websiteManager():
     def __init__(self,webList):   
         super().__init__()
         self.webList = webList
+        if(exists(hosts_path) == False):         #check if there's already a hostfile
+            f = open(hosts_path,"x")
                     
     def addToBlockedList(self,web):
         webUrl = None
@@ -22,6 +23,7 @@ class websiteManager():
             if webUrl not in blockedWebList:
                 blockedWebList.append(webUrl)
         self.displayWebList()
+        self.writeHostFile()
             
     def displayWebList(self):
         self.webList.clear()
@@ -31,5 +33,26 @@ class websiteManager():
             self.webList.addItem(item)
     
     def removeWebFromBlockedList(self,web):
+        self.emptyHostFile()
         blockedWebList.remove(web)
         self.displayWebList()
+        time.sleep(0.5)
+        self.writeHostFile()
+        
+    def writeHostFile(self):
+        with open(hosts_path, 'r+') as file:
+            content = file.read()
+            for website in blockedWebList:
+                if website in content:
+                    pass
+                else:
+                    # mapping hostnames to your localhost IP address
+                    file.write(redirect + " " + website + "\n")
+    
+    def emptyHostFile(self):
+        with open(hosts_path, 'r+') as file:
+            file.truncate(0)
+    
+    def getNumberOfBlockedWebs(self):
+        print(len(blockedWebList))
+        return len(blockedWebList)
