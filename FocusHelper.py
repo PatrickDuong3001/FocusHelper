@@ -462,4 +462,4 @@ if is_admin():
     UIWindow = UI()
     sys.exit(app.exec()) 
 else: 
-    ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, " ".join(sys.argv), None, 1)
+    ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, " ".join(sys.argv[1:]), None, 1)
