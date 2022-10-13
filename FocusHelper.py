@@ -15,6 +15,8 @@ import emailManager
 import time
 import subprocess
 import emailSender
+import websiteManager
+import ctypes
 
 #Initiate UI
 class UI(QMainWindow,QObject):
@@ -33,6 +35,7 @@ class UI(QMainWindow,QObject):
         self.errorFormat = '<span style="color:red">{}</span>'
         self.warningFormat = '<span style="color:yellow">{}</span>'
         self.validFormat = '<span style="color:green">{}</span>'
+        self.webManage = websiteManager.websiteManager(self.webList)
                         
         #define Widgets
         self.dialogBox = self.findChild(QPlainTextEdit,"dialogBox")
@@ -56,6 +59,10 @@ class UI(QMainWindow,QObject):
         self.addLabel = self.findChild(QLabel,"addLabel")
         self.shutDownLabel = self.findChild(QLabel,"shutDownLabel")
         self.emailListLabel = self.findChild(QLabel,"emailListLabel")
+        
+        self.webAdder = self.findChild(QPushButton,"webAdder")
+        self.webInsert = self.findChild(QLineEdit,"webInsert")
+        self.webList = self.findChild(QListWidget,"webList")
                 
         #controls
         self.activate1.setEnabled(False)
@@ -86,6 +93,8 @@ class UI(QMainWindow,QObject):
         self.emailAdd.clicked.connect(self.emailPassHandler)
         self.shutDown.clicked.connect(self.forcedShutDown)
         self.emailList.installEventFilter(self)
+        self.webAdder.clicked.connect(self.addToBlockList)
+        self.webList.installEventFilter(self)
         
         #initial dialog messages
         self.dialogBox.appendPlainText("Welcome to FocusHelper. Hope you enjoy it! :)")
@@ -103,6 +112,21 @@ class UI(QMainWindow,QObject):
     def setIcon(self):
         appIcon = QIcon("resources/focusIcon.png")
         self.setWindowIcon(appIcon)
+    #######################################################################################################################################################################
+    
+    #########################################################These methods handle Website Blocker and file writing#########################################################
+    def addToBlockList(self):
+        web = self.webInsert.text()
+        if web != None and len(web) != 0:
+            self.webManage.addToBlockedList(web)
+            msgBox = QMessageBox()
+            msgBox.setIcon(QMessageBox.Warning)
+            msgBox.setWindowTitle("WARNING")
+            msgBox.setStandardButtons(QMessageBox.Ok)
+            msgBox.setWindowIcon(QIcon("resources/focusIcon.png"))
+            msgBox.setText("Restart Browser to see effect")
+            msgBox.exec()
+    #context menu for the blocked web list is handled by the eventFilter() method in the Emailer and File Writing section below
     #######################################################################################################################################################################
     
     ################################################################These methods handle Emailer and File Writing##########################################################
@@ -174,9 +198,23 @@ class UI(QMainWindow,QObject):
                         self.passwordPrompt(chosenEmail,3)
             except:
                 print("exception happens")
+        elif(event.type() == QtCore.QEvent.ContextMenu and source is self.webList):
+            menu = QMenu()
+            unblockAction = menu.addAction("Unblock")
+            try:
+                chosenWeb = source.itemAt(event.pos()).text()
+                action = menu.exec_(event.globalPos())
+                if action != None:
+                    if (action == unblockAction):
+                        print("unblock")
+                        chosenEmail = self.emailManage.getChosenEmail() 
+                        if chosenEmail not in [None,"", " "]:
+                            self.passwordPrompt(self.emailManage.getChosenEmail(),5,chosenWeb)
+            except:
+                print("exception happens")
         return super(UI,self).eventFilter(source, event)
     
-    def passwordPrompt(self,email,actionType):
+    def passwordPrompt(self,email,actionType,chosenWeb=None):
         dlg =  QtWidgets.QInputDialog(self)          
         dlg.setInputMode(QtWidgets.QInputDialog.TextInput) 
         dlg.setLabelText("Please Enter Password:")   
@@ -236,13 +274,23 @@ class UI(QMainWindow,QObject):
             else:
                 msgBox.setText("Quit already? I'm so disappointed in you!")
                 msgBox.exec()
+                self.webManage.emptyHostFile()
                 subprocess.call(f"TASKKILL /F /T /IM FocusHelper.exe >nul 2>&1", shell=True)
-            
+        elif actionType == 5:
+            if passwordReturn == 0:
+                msgBox.setText("Wrong/No Password")
+                msgBox.exec()
+            else: 
+                msgBox.setText("Unblock Successfully!\nRestart Browser to see effect")
+                msgBox.exec()
+                self.webManage.removeWebFromBlockedList(chosenWeb)
+                
     def closeEvent(self, event):
         appManage = appManager().getNumberOfOccupiedApps()
+        webManage = self.webManage.getNumberOfBlockedWebs()
         print(appManage)
         if self.emailManage.getChosenEmail() not in [0,None,""]: 
-            if (appManage != 0):
+            if (appManage != 0 or webManage != 0):
                 msgBox = QMessageBox()
                 msgBox.setIcon(QMessageBox.Critical)
                 msgBox.setWindowTitle("ALERT")
@@ -250,20 +298,23 @@ class UI(QMainWindow,QObject):
                 msgBox.setWindowIcon(QIcon("resources/focusIcon.png"))
                 if (self.quitAttempt < 3):
                     self.quitAttempt += 1
-                    msgBox.setText(f"Cannot close. Applications under lock or timer!\n Quit attempts: {self.quitAttempt}")
+                    msgBox.setText(f"Cannot close. Applications/Webs under lock or timer!\n Quit attempts: {self.quitAttempt}")
                     msgBox.exec()
                     self.dialogBox.appendHtml(self.errorFormat.format("Don't try to close the program!"))
                     event.ignore()
                 else: 
+                    self.webManage.emptyHostFile()
                     msgBox.setText("Quit attempts exceed 3. Notifying Super User...")
                     msgBox.exec()
                     emailSender.emailSender(self.emailManage.getChosenEmail())
                     event.accept()
                     subprocess.call(f"TASKKILL /F /T /IM FocusHelper.exe >nul 2>&1", shell=True)
             else:
+                self.webManage.emptyHostFile()
                 event.accept()
                 subprocess.call(f"TASKKILL /F /T /IM FocusHelper.exe >nul 2>&1", shell=True)
         else: 
+            self.webManage.emptyHostFile()
             event.accept()
             subprocess.call(f"TASKKILL /F /T /IM FocusHelper.exe >nul 2>&1", shell=True)
     
@@ -400,6 +451,15 @@ class UI(QMainWindow,QObject):
     ############################################################################################################################################################################
         
 # Initialize the app
-app = QApplication(sys.argv)
-UIWindow = UI()
-sys.exit(app.exec()) 
+def is_admin():
+    try:
+        return ctypes.windll.shell32.IsUserAnAdmin()
+    except:
+        return False
+
+if is_admin():
+    app = QApplication(sys.argv)
+    UIWindow = UI()
+    sys.exit(app.exec()) 
+else: 
+    ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, " ".join(sys.argv), None, 1)
