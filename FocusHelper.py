@@ -17,6 +17,8 @@ import subprocess
 import emailSender
 import websiteManager
 import ctypes
+import os
+from PyQt5.QtGui import QDesktopServices
 
 #Initiate UI
 class UI(QMainWindow,QObject):
@@ -76,10 +78,11 @@ class UI(QMainWindow,QObject):
         
         #menu bar
         option = self.menuBar().addMenu('Options')
+        info = self.menuBar().addMenu('Info')
         self.advancedMode = option.addAction('Advanced Mode')
         self.normalMode = option.addAction('Normal Mode')
-        self.about = option.addAction("About")
-        self.instruction = option.addAction("How to Use")
+        self.about = info.addAction("About")
+        self.instruction = info.addAction("How to Use")
         
         #events
         self.activate2.clicked.connect(self.activatedCountDown)
@@ -95,6 +98,7 @@ class UI(QMainWindow,QObject):
         self.emailList.installEventFilter(self)
         self.webAdder.clicked.connect(self.addToBlockList)
         self.webList.installEventFilter(self)
+        self.about.triggered.connect(self.displayAbout)
         
         #initial dialog messages
         self.dialogBox.appendPlainText("Welcome to FocusHelper. Hope you enjoy it! :)")
@@ -114,7 +118,7 @@ class UI(QMainWindow,QObject):
         self.setWindowIcon(appIcon)
     #######################################################################################################################################################################
     
-    #########################################################These methods handle Website Blocker and file writing#########################################################
+    #########################################################These methods handle Website Blocker and HTML display#########################################################
     def addToBlockList(self):
         web = self.webInsert.text()
         if web != None and len(web) != 0:
@@ -126,6 +130,9 @@ class UI(QMainWindow,QObject):
             msgBox.setWindowIcon(QIcon("resources/focusIcon.png"))
             msgBox.setText("Restart Browser to see effect")
             msgBox.exec()
+    
+    def displayAbout(self):
+        self.view = QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(os.path.abspath('resources/Home.html')))
     #context menu for the blocked web list is handled by the eventFilter() method in the Emailer and File Writing section below
     #######################################################################################################################################################################
     
