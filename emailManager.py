@@ -10,22 +10,24 @@ import time
 from PyQt5.QtGui import QColor
 
 emailsDisplayedDict = {}
+FocusHelperPath = os.path.join(os.getenv('LOCALAPPDATA'),"FocusHelper")
+EmailListPath = os.path.join(FocusHelperPath,"emailList.cfg")
 class emailManager():
     def __init__(self,emailList):   
         super().__init__()
         self.emailList = emailList
         self.config = ConfigParser()
-        self.config.read("resources/emailList.cfg")
+        self.config.read(EmailListPath)
         
     
     def setupFile(self):
         #prepare a config file 
-        if(exists("resources/emailList.cfg") == False):
-            f = open("resources/emailList.cfg","x")
+        if(exists(EmailListPath) == False):
+            f = open(EmailListPath,"x")
             self.config.add_section("emails")
             self.config.add_section("passwords") 
             self.config.add_section("chosen_email")
-            with open("resources/emailList.cfg","w") as configfile:
+            with open(EmailListPath,"w") as configfile:
                 self.config.write(configfile)
         else: 
             self.emailListOnStart()
@@ -48,14 +50,14 @@ class emailManager():
         else:
             emailIndex = self.countEmails()+1
             self.config.set("emails",f"email_{emailIndex}",email) 
-            with open("resources/emailList.cfg","w") as configfile:
+            with open(EmailListPath,"w") as configfile:
                 self.config.write(configfile)
             self.savePasswords(emailIndex,password)
             self.addToEmailDisplayedDict(email,password)
     
     def savePasswords(self,index,password):
         self.config.set("passwords",f"pass_{index}",password) 
-        with open("resources/emailList.cfg","w") as configfile:
+        with open(EmailListPath,"w") as configfile:
             self.config.write(configfile)
     
     def emailListOnStart(self):
@@ -101,7 +103,7 @@ class emailManager():
     
     def setChosenEmail(self,email):
         self.config.set("chosen_email","email",email) 
-        with open("resources/emailList.cfg","w") as configfile:
+        with open(EmailListPath,"w") as configfile:
             self.config.write(configfile)
     
     def addToEmailDisplayedDict(self,email,password):
@@ -130,7 +132,7 @@ class emailManager():
         for email,password in emailsDisplayedDict.items():
             self.config.set("passwords",f"pass_{j}",password)
             j += 1
-        with open("resources/emailList.cfg","w") as configfile:
+        with open(EmailListPath,"w") as configfile:
             self.config.write(configfile)
         self.displayEmailList()
     
@@ -138,7 +140,7 @@ class emailManager():
         self.config.remove_section("chosen_email")
         time.sleep(0.5)
         self.config.add_section("chosen_email")
-        with open("resources/emailList.cfg","w") as configfile:
+        with open(EmailListPath,"w") as configfile:
             self.config.write(configfile)
         self.displayEmailList()
             

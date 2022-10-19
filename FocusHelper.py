@@ -19,13 +19,16 @@ import websiteManager
 import ctypes
 import os
 from PyQt5.QtGui import QDesktopServices
+import os
+import wget
+import time
 
 #Initiate UI
 class UI(QMainWindow,QObject):
     ##############################################################Set up UI and prepare applications########################################################################
     def __init__(self):
         super(UI,self).__init__()
-        self.ui = loadUi("resources/FocusUI.ui",self)
+        self.ui = loadUi(os.path.join(FocusHelperPath,"FocusUI.ui"),self)
         self.setFixedSize(915, 616)
         self.setIcon()
         self.setWindowTitle("FocusHelper v1.0")
@@ -114,7 +117,7 @@ class UI(QMainWindow,QObject):
         self.appDetect2.appDetect()
         
     def setIcon(self):
-        appIcon = QIcon("resources/focusIcon.png")
+        appIcon = QIcon(os.path.join(FocusHelperPath,"focusIcon.png"))
         self.setWindowIcon(appIcon)
     #######################################################################################################################################################################
     
@@ -127,12 +130,12 @@ class UI(QMainWindow,QObject):
             msgBox.setIcon(QMessageBox.Warning)
             msgBox.setWindowTitle("WARNING")
             msgBox.setStandardButtons(QMessageBox.Ok)
-            msgBox.setWindowIcon(QIcon("resources/focusIcon.png"))
+            msgBox.setWindowIcon(QIcon(os.path.join(FocusHelperPath,"focusIcon.png")))
             msgBox.setText("Restart Browser to see effect")
             msgBox.exec()
     
     def displayAbout(self):
-        self.view = QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(os.path.abspath('resources/Home.html')))
+        self.view = QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(os.path.join(FocusHelperPath,"Home.html")))
     #context menu for the blocked web list is handled by the eventFilter() method in the Emailer and File Writing section below
     #######################################################################################################################################################################
     
@@ -144,7 +147,7 @@ class UI(QMainWindow,QObject):
         msgBox.setIcon(QMessageBox.Warning)
         msgBox.setWindowTitle("WARNING")
         msgBox.setStandardButtons(QMessageBox.Ok)
-        msgBox.setWindowIcon(QIcon("resources/focusIcon.png"))
+        msgBox.setWindowIcon(QIcon(os.path.join(FocusHelperPath,"focusIcon.png")))
         if(len(email) == 0 and len(password) == 0):
             self.dialogBox.appendHtml(self.warningFormat.format("You didn't enter email or password!"))
             msgBox.setText("Please enter your email and password!")
@@ -227,7 +230,7 @@ class UI(QMainWindow,QObject):
         dlg.setLabelText("Please Enter Password:")   
         dlg.setFixedSize(350,100)              
         dlg.setWindowTitle("PASSWORD")       
-        dlg.setWindowIcon(QIcon("resources/focusIcon.png"))
+        dlg.setWindowIcon(QIcon(os.path.join(FocusHelperPath,"focusIcon.png")))
         dlg.exec_()   
         #self.emailManage.passwordVerifier(email,dlg.textValue())
         passwordReturn = self.emailManage.passwordVerifier(email,dlg.textValue())
@@ -235,7 +238,7 @@ class UI(QMainWindow,QObject):
         msgBox.setIcon(QMessageBox.Warning)
         msgBox.setWindowTitle("WARNING")
         msgBox.setStandardButtons(QMessageBox.Ok)
-        msgBox.setWindowIcon(QIcon("resources/focusIcon.png"))
+        msgBox.setWindowIcon(QIcon(os.path.join(FocusHelperPath,"focusIcon.png")))
         if actionType == 0:
             if passwordReturn == 0:
                 msgBox.setText("Wrong/No Password")
@@ -302,7 +305,7 @@ class UI(QMainWindow,QObject):
                 msgBox.setIcon(QMessageBox.Critical)
                 msgBox.setWindowTitle("ALERT")
                 msgBox.setStandardButtons(QMessageBox.Ok)
-                msgBox.setWindowIcon(QIcon("resources/focusIcon.png"))
+                msgBox.setWindowIcon(QIcon(os.path.join(FocusHelperPath,"focusIcon.png")))
                 if (self.quitAttempt < 3):
                     self.quitAttempt += 1
                     msgBox.setText(f"Cannot close. Applications/Webs under lock or timer!\n Quit attempts: {self.quitAttempt}")
@@ -397,6 +400,7 @@ class UI(QMainWindow,QObject):
                 msgBox.setIcon(QMessageBox.Warning)
                 msgBox.setWindowTitle("WARNING")
                 msgBox.setStandardButtons(QMessageBox.Ok)
+                msgBox.setWindowIcon(QIcon(os.path.join(FocusHelperPath,"focusIcon.png")))
                 msgBox.setText("Cannot set lock or timer on 6+ applications!")
                 msgBox.exec()
                 self.dialogBox.appendHtml(self.warningFormat.format("Cannot set lock or timer on 6+ applications!"))
@@ -404,6 +408,7 @@ class UI(QMainWindow,QObject):
             msgBox = QMessageBox()
             msgBox.setIcon(QMessageBox.Warning)
             msgBox.setWindowTitle("WARNING")
+            msgBox.setWindowIcon(QIcon(os.path.join(FocusHelperPath,"focusIcon.png")))
             msgBox.setStandardButtons(QMessageBox.Ok)
             if (self.anAppChosenToStop == False) and (self.timeStopChosen == False):
                 msgBox.setText("Please select a time and an app")
@@ -440,6 +445,7 @@ class UI(QMainWindow,QObject):
                 msgBox.setIcon(QMessageBox.Warning)
                 msgBox.setWindowTitle("WARNING")
                 msgBox.setStandardButtons(QMessageBox.Ok)
+                msgBox.setWindowIcon(QIcon(os.path.join(FocusHelperPath,"focusIcon.png")))
                 msgBox.setText("Cannot set lock or timer on 6+ applications!")
                 msgBox.exec()
                 self.dialogBox.appendHtml(self.warningFormat.format("Cannot set lock or timer on 6+ applications!"))
@@ -448,6 +454,7 @@ class UI(QMainWindow,QObject):
             msgBox.setIcon(QMessageBox.Warning)
             msgBox.setWindowTitle("WARNING")
             msgBox.setStandardButtons(QMessageBox.Ok)
+            msgBox.setWindowIcon(QIcon(os.path.join(FocusHelperPath,"focusIcon.png")))
             if (self.anAppChosenToLock == False) and (self.durationAlreadySet == False):
                 msgBox.setText("Please select a duration and an app")
             elif (self.anAppChosenToLock == True) and (self.durationAlreadySet == False):
@@ -457,7 +464,19 @@ class UI(QMainWindow,QObject):
             msgBox.exec()        
     ############################################################################################################################################################################
         
-# Initialize the app
+####################################################################Main Controller#############################################################################################
+FocusUiUrl = "https://raw.githubusercontent.com/PatrickDuong3001/FocusHelper/master/resources/FocusUI.ui"
+HomeCssUrl = "https://raw.githubusercontent.com/PatrickDuong3001/FocusHelper/master/resources/Home.css"
+HomeHtmlUrl = "https://raw.githubusercontent.com/PatrickDuong3001/FocusHelper/master/resources/Home.html"
+StyleCssUrl = "https://raw.githubusercontent.com/PatrickDuong3001/FocusHelper/master/resources/Style.css"
+StyleJsUrl = "https://raw.githubusercontent.com/PatrickDuong3001/FocusHelper/master/resources/Style.js"
+FocusIcon1Url = "https://raw.githubusercontent.com/PatrickDuong3001/FocusHelper/master/resources/focusIcon.png"
+FocusIcon2Url = "https://raw.githubusercontent.com/PatrickDuong3001/FocusHelper/master/resources/focusIcon2.png"
+JQueryUrl = "https://raw.githubusercontent.com/PatrickDuong3001/FocusHelper/master/resources/jquery.js"
+MediaUrl = "https://raw.githubusercontent.com/PatrickDuong3001/FocusHelper/master/resources/media.png"
+UniversityUrl = "https://raw.githubusercontent.com/PatrickDuong3001/FocusHelper/master/resources/university.png"
+appDataPath = os.getenv('LOCALAPPDATA')
+FocusHelperPath = os.path.join(appDataPath,"FocusHelper")
 def is_admin():
     try:
         return ctypes.windll.shell32.IsUserAnAdmin()
@@ -465,6 +484,19 @@ def is_admin():
         return False
 
 if is_admin():
+    if not os.path.exists(FocusHelperPath):
+        os.mkdir(FocusHelperPath)
+        wget.download(FocusUiUrl, os.path.join(FocusHelperPath,"FocusUI.ui"))
+        wget.download(HomeCssUrl, os.path.join(FocusHelperPath,"Home.css"))
+        wget.download(HomeHtmlUrl,os.path.join(FocusHelperPath,"Home.html"))
+        wget.download(StyleCssUrl,os.path.join(FocusHelperPath,"Style.css"))
+        wget.download(StyleJsUrl,os.path.join(FocusHelperPath,"Style.js"))
+        wget.download(FocusIcon1Url,os.path.join(FocusHelperPath,"focusIcon.png"))
+        wget.download(FocusIcon2Url,os.path.join(FocusHelperPath,"focusIcon2.png"))
+        wget.download(JQueryUrl,os.path.join(FocusHelperPath,"jquery.js"))
+        wget.download(MediaUrl,os.path.join(FocusHelperPath,"media.png"))
+        wget.download(UniversityUrl,os.path.join(FocusHelperPath,"university.png"))
+        time.sleep(3)
     app = QApplication(sys.argv)
     UIWindow = UI()
     sys.exit(app.exec()) 
