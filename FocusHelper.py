@@ -29,7 +29,7 @@ class UI(QMainWindow,QObject):
     def __init__(self):
         super(UI,self).__init__()
         self.ui = loadUi(os.path.join(FocusHelperPath,"FocusUI.ui"),self)
-        self.setFixedSize(915, 616)
+        self.setFixedSize(915, 750)
         self.setIcon()
         self.setWindowTitle("FocusHelper v1.0")
         self.show() 
