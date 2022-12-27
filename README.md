@@ -1,5 +1,5 @@
 # FocusHelper
-This PC software is developed in Python and QT framework.
+This PC software is developed in Python, CSS, HTML, and QT framework.
 
 Features: 
 - Multithreading - can control 12 apps concurrently (block apps for a duration and/or close apps at specific times).
